@@ -1,7 +1,9 @@
 package comp5216.sydney.edu.au.todolist;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -12,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     // Define variables
@@ -36,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
         itemsAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, items);
         // Connect the listView and the adapter
         listView.setAdapter(itemsAdapter);
+        setupListViewListener();
     }
 
     public void onAddItemClick(View view) {
@@ -49,5 +53,25 @@ public class MainActivity extends AppCompatActivity {
             itemsAdapter.add(toAddString + "  " + currentTime); // Add text to list view adapter
             addItemEditText.setText("");
         }
+    }
+
+    private void setupListViewListener() {
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapterView, View view, final int position, long rowId) {
+                Log.i("MainActivity", "Long Clicked Item" + position);
+                items.remove(position);
+                itemsAdapter.notifyDataSetChanged();
+                return true;
+            }
+        });
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, final int position, long id) {
+                String updateItem = (String) itemsAdapter.getItem(position);
+                Log.i("MainActivity", "Clicked item" + position + ": " + updateItem);
+            }
+        });
     }
 }

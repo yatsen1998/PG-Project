@@ -6,6 +6,11 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.ListView
+import android.widget.Toast
+import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.util.*
+import kotlin.collections.ArrayList
 
 class MainActivity : AppCompatActivity() {
 
@@ -31,9 +36,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun onAddItemCLick(view: View?) {
+        val date = Date()
+        val toAddTime = date.time
         val toAddString = addItemEditText?.text.toString()
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+
         if (toAddString.isNotEmpty()) {
-            itemsAdapter?.add(toAddString)
+            itemsAdapter?.add(toAddString + " " + sdf.format(toAddTime))
+            Toast.makeText(this, sdf.format(toAddTime), Toast.LENGTH_SHORT).show()
             addItemEditText?.setText("")
         }
     }
