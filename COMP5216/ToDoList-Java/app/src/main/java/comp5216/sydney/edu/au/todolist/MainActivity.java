@@ -1,5 +1,7 @@
 package comp5216.sydney.edu.au.todolist;
 
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -9,6 +11,9 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.text.SimpleDateFormat;
@@ -22,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<String> items;
     ArrayAdapter<String> itemsAdapter;
     EditText addItemEditText;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,17 +66,59 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onItemLongClick(AdapterView<?> adapterView, View view, final int position, long rowId) {
                 Log.i("MainActivity", "Long Clicked Item" + position);
-                items.remove(position);
-                itemsAdapter.notifyDataSetChanged();
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setTitle(R.string.dialog_delete_tile)
+                        .setMessage(R.string.dialog_delete_msg)
+                        .setPositiveButton(R.string.delete, new
+                                DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialogInterface, int i) {
+                                            items.remove(position);
+                                            itemsAdapter.notifyDataSetChanged();
+                                    }
+                                })
+                        .setNegativeButton(R.string.cancel, new
+                                DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialogInterface, int i) {
+
+                                    }
+                                });
+                builder.create().show();
                 return true;
             }
         });
+
+        ActivityResultLauncher<Intent> mLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK) {
+                        // Extract name value from result extras
+                        String editedItem = result.getData().getExtras().getString("item");
+                        int position = result.getData().getIntExtra("position", -1);
+                        items.set(position, editedItem);
+                        Log.i("Updated item in list ", editedItem + ", position: " + position);
+                        // Make a standard toast that just contains text
+                        Toast.makeText(getApplicationContext(), "Updated: " + editedItem, Toast.LENGTH_SHORT).show();
+                    }
+                    itemsAdapter.notifyDataSetChanged();
+                }
+        );
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, final int position, long id) {
                 String updateItem = (String) itemsAdapter.getItem(position);
                 Log.i("MainActivity", "Clicked item" + position + ": " + updateItem);
+
+                Intent intent = new Intent(MainActivity.this, EditToDoItemActivity.class);
+                if (intent != null) {
+                    intent.putExtra("item", updateItem);
+                    intent.putExtra("position", position);
+
+                    mLauncher.launch(intent);
+                    itemsAdapter.notifyDataSetChanged();
+                }
             }
         });
     }

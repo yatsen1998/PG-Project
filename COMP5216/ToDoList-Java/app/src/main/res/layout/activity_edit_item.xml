@@ -1,0 +1,35 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="comp5216.sydney.edu.au.todolist.EditToDoItemActivity">
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/edit" />
+
+    <EditText
+        android:id="@+id/etEditItem"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/textView1"
+        android:layout_alignParentStart="true"
+        android:autofillHints="Enter Here..."
+        android:ems="10">
+
+        <requestFocus />
+    </EditText>
+
+    <Button
+        android:id="@+id/btnSave"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/etEditItem"
+        android:layout_alignStart="@+id/etEditItem"
+        android:layout_marginTop="25dp"
+        android:onClick="onSubmit"
+        android:text="@string/save" />
+
+</RelativeLayout>
