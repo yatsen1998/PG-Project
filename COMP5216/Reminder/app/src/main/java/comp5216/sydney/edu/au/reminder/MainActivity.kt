@@ -1,22 +1,22 @@
 package comp5216.sydney.edu.au.reminder
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.AdapterView.OnItemClickListener
 import android.widget.AdapterView.OnItemLongClickListener
-import android.widget.ArrayAdapter
 import android.widget.ListView
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
     var listView: ListView? = null
-    var items: ArrayList<String?>? = null
-    var itemsAdapter: ArrayAdapter<String?>? = null
+    //var items: ArrayList<String?>? = null
+    private var tasks: ArrayList<Task>? = null
+    var tasksAdapter: TasksAdapter? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,13 +24,22 @@ class MainActivity : AppCompatActivity() {
 
         listView = findViewById<View?>(R.id.lstViewMain) as ListView
 
-        items = ArrayList()
-        items!!.add("test1")
-        items!!.add("test2")
+//        items = ArrayList()
+//        items!!.add("test1")
+//        items!!.add("test2")
+        val task = Task()
+        tasks =ArrayList<Task>()
+        task.title = "Test1"
+        task.date = "Remaining Time"
+        tasks!!.add(task)
 
-        itemsAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, items!!)
+        tasksAdapter = TasksAdapter(
+            this,
+            android.R.layout.simple_list_item_2,
+            android.R.id.text1,
+            tasks!!)
 
-        listView!!.adapter = itemsAdapter
+        listView!!.adapter = tasksAdapter
 
         setupListViewListener()
     }
@@ -39,21 +48,22 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.StartActivityForResult()
     ) { result: ActivityResult? ->
         if (result?.resultCode == RESULT_OK) {
-            val editedItem = result.data?.extras?.getString("item")
-            itemsAdapter?.add(editedItem!!)
+            val editedTitle = result.data?.extras?.getString("item")
+            val editedDueTime = result.data?.extras?.getString("dueTime")
+            val task = Task()
+
+            task.title = editedTitle!!
+            task.date = editedDueTime!!
+            tasks?.add(task)
         }
     }
 
-    fun onAddItemClick(view: View?) {
+    fun onAddTaskClick(view: View?) {
 
         val intent = Intent(this@MainActivity, EditTaskActivity::class.java)
 
         btnlauncher.launch((intent))
-        itemsAdapter?.notifyDataSetChanged()
-//        if (toAddString.isNotEmpty()) {
-//            itemsAdapter?.add(toAddString)
-//            addItemEditText?.setText("")
-//        }
+        tasksAdapter?.notifyDataSetChanged()
     }
 
     private fun setupListViewListener() {
@@ -64,8 +74,8 @@ class MainActivity : AppCompatActivity() {
                 builder.setTitle(R.string.dialog_delete_title)
                     .setMessage(R.string.dialog_delete_msg)
                     .setPositiveButton(R.string.delete) { dialogInterface, i->
-                        items?.removeAt(position)
-                        itemsAdapter?.notifyDataSetChanged()
+                            tasks?.removeAt(position)
+                            tasksAdapter?.notifyDataSetChanged()
                     }
                     .setNegativeButton(R.string.cancel) {dialogInterface, i->
 
@@ -78,25 +88,30 @@ class MainActivity : AppCompatActivity() {
             ActivityResultContracts.StartActivityForResult()
         ) { result: ActivityResult? ->
             if (result?.resultCode == RESULT_OK) {
-                val editedItem = result.data?.extras?.getString("item")
+                val editedTitle = result.data?.extras?.getString("item")
+                val editedDueTime = result.data?.extras?.getString("dueTime")
                 val position = result.data?.getIntExtra("position", -1)
 
-                items?.set(position!!, editedItem)
-                Log.i("Update item in list", "$editedItem, position: $position")
-                itemsAdapter?.notifyDataSetChanged()
+                tasks!![position!!].title = editedTitle!!
+                tasks!![position].date = editedDueTime!!
+                Log.i("Update item in list", "$editedTitle, position: $position")
+                tasksAdapter?.notifyDataSetChanged()
             }
         }
 
         listView?.onItemClickListener =
             OnItemClickListener { parent, view, position, rowID ->
-                val updateItem = itemsAdapter?.getItem(position) as String?
-                Log.i("MainActivity", "Clicked item $position $updateItem")
+                val updateTitle = tasksAdapter?.getItem(position)!!.title
+                val updateDueTime = tasksAdapter?.getItem(position)!!.date
+                Log.i("MainActivity", "Clicked item $position $updateTitle $updateDueTime")
+
                 val intent = Intent(this@MainActivity, EditTaskActivity::class.java)
-                intent.putExtra("item", updateItem)
+                intent.putExtra("item", updateTitle)
+                intent.putExtra("dueTime", updateDueTime)
                 intent.putExtra("position", position)
 
                 launcher.launch(intent)
-                itemsAdapter?.notifyDataSetChanged()
+                tasksAdapter?.notifyDataSetChanged()
             }
     }
 }
