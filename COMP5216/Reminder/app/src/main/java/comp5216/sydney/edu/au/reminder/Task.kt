@@ -6,5 +6,5 @@ import kotlin.collections.ArrayList
 
 class Task {
     var title: String = ""
-    var due: ArrayList<String>? = ArrayList()
+    var dueTime: String = ""
 }

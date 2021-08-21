@@ -25,8 +25,7 @@ class MainActivity : AppCompatActivity() {
 
         val task = Task()
         task.title = "Test1"
-        task.due!!.add("date")
-        task.due!!.add("time")
+        task.dueTime = "date"
 
         tasks =ArrayList()
         tasks!!.add(task)
@@ -48,12 +47,14 @@ class MainActivity : AppCompatActivity() {
     ) { result: ActivityResult? ->
         if (result?.resultCode == RESULT_OK) {
             val editedTitle = result.data?.extras?.getString("item")
-            val editedDue = result.data?.extras?.getStringArrayList("due")
+            val editedDue = result.data?.extras?.getString("due")
             val task = Task()
 
             task.title = editedTitle!!
-            task.due = editedDue
+            task.dueTime = editedDue!!
             tasks?.add(task)
+
+            tasksAdapter?.notifyDataSetChanged()
         }
     }
 
@@ -61,8 +62,7 @@ class MainActivity : AppCompatActivity() {
 
         val intent = Intent(this@MainActivity, EditTaskActivity::class.java)
 
-        btnlauncher.launch((intent))
-        tasksAdapter?.notifyDataSetChanged()
+        btnlauncher.launch(intent)
     }
 
     private fun setupListViewListener() {
@@ -87,12 +87,12 @@ class MainActivity : AppCompatActivity() {
             ActivityResultContracts.StartActivityForResult()
         ) { result: ActivityResult? ->
             if (result?.resultCode == RESULT_OK) {
-                val editedTitle = result.data?.extras?.getString("item")
-                val editedDue = result.data?.extras?.getStringArrayList("due")
+                val editedTitle = result.data?.getStringExtra("item")
+                val editedDue = result.data?.getStringExtra("due")
                 val position = result.data?.getIntExtra("position", -1)
 
                 tasks!![position!!].title = editedTitle!!
-                tasks!![position].due = editedDue
+                tasks!![position].dueTime = editedDue!!
                 Log.i("Update item in list", "$editedTitle, position: $position")
                 tasksAdapter?.notifyDataSetChanged()
             }
@@ -101,12 +101,12 @@ class MainActivity : AppCompatActivity() {
         listView?.onItemClickListener =
             OnItemClickListener { parent, view, position, rowID ->
                 val updateTitle = tasksAdapter?.getItem(position)!!.title
-                val updateDue = tasksAdapter?.getItem(position)!!.due
+                val updateDue = tasksAdapter?.getItem(position)!!.dueTime
                 Log.i("MainActivity", "Clicked item $position $updateTitle $updateDue")
 
                 val intent = Intent(this@MainActivity, EditTaskActivity::class.java)
                 intent.putExtra("item", updateTitle)
-                intent.putStringArrayListExtra("due", updateDue)
+                intent.putExtra("due", updateDue)
                 intent.putExtra("position", position)
 
                 launcher.launch(intent)

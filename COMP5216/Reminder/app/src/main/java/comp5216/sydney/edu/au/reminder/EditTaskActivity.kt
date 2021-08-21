@@ -1,22 +1,20 @@
 package comp5216.sydney.edu.au.reminder
 
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
+import android.os.Build
 import android.os.Bundle
 import android.text.InputType
 import android.util.Log
 import android.view.View
 import android.widget.EditText
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import java.text.ParsePosition
+import java.text.SimpleDateFormat
 import java.util.*
-import android.widget.DatePicker
-
-import android.app.DatePickerDialog
-import android.app.DatePickerDialog.OnDateSetListener
-import android.widget.TimePicker
-
-import android.app.TimePickerDialog
-import android.app.TimePickerDialog.OnTimeSetListener
 
 
 class EditTaskActivity : AppCompatActivity() {
@@ -30,7 +28,7 @@ class EditTaskActivity : AppCompatActivity() {
         setContentView(R.layout.activity_edit_task)
 
         val editedItem = intent.getStringExtra("item")
-        val editedDate = intent.getStringExtra("date")
+        val editedDate = intent.getStringExtra("due")
         position = intent.getIntExtra("position", -1)
 
         editTask = findViewById<View?>(R.id.etEditItem) as EditText
@@ -38,14 +36,14 @@ class EditTaskActivity : AppCompatActivity() {
 
         editDate = findViewById<View?>(R.id.etEditDate) as EditText
         editDate!!.inputType = InputType.TYPE_NULL;
-        setupOnDateListener()
+        setOnDateListener()
 
         editTime = findViewById<View?>(R.id.etEditTime) as EditText
         editTime!!.inputType = InputType.TYPE_NULL;
-        setupOnTimeListener()
+        setOnTimeListener()
     }
 
-    fun setupOnDateListener() {
+    fun setOnDateListener() {
         editDate?.setOnClickListener(View.OnClickListener {
             Log.i("EditTaskActivity", "Click Date Picker")
             val cldr = Calendar.getInstance()
@@ -60,7 +58,7 @@ class EditTaskActivity : AppCompatActivity() {
         })
     }
 
-    fun setupOnTimeListener() {
+    fun setOnTimeListener() {
         editTime?.setOnClickListener(View.OnClickListener {
             Log.i("EditTaskActivity", "Click Time Picker")
             val cldr = Calendar.getInstance()
@@ -73,12 +71,43 @@ class EditTaskActivity : AppCompatActivity() {
         })
     }
 
+    fun getDifference(startDate: Date, endDate: Date):String {
+        //milliseconds
+        var different = endDate.time - startDate.time
+        val secondsInMilli: Long = 1000
+        val minutesInMilli = secondsInMilli * 60
+        val hoursInMilli = minutesInMilli * 60
+        val daysInMilli = hoursInMilli * 24
+        val elapsedDays = different / daysInMilli
+        different = different % daysInMilli
+        val elapsedHours = different / hoursInMilli
+        different = different % hoursInMilli
+        val elapsedMinutes = different / minutesInMilli
+        different = different % minutesInMilli
+        val elapsedSeconds = different / secondsInMilli
+        Log.i( "EditTaskActivity",
+            "$elapsedDays days, $elapsedHours hours, $elapsedMinutes minutes, $elapsedSeconds seconds")
+        return "$elapsedDays days, $elapsedHours hours, $elapsedMinutes minutes, $elapsedSeconds seconds"
+    }
+
+
+    @RequiresApi(Build.VERSION_CODES.O)
     fun onSubmitClick(v: View?) {
-        editTask = findViewById<View?>(R.id.etEditItem) as EditText
+
+        val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm")
+        val dueDate: Date = sdf.parse(editDate?.text.toString() + " " + editTime?.text.toString())
+
+        val cal = Calendar.getInstance()
+        val curDate = cal.time
+
+        val dueTime = getDifference(curDate, dueDate)
 
         val data = Intent()
 
+        editTask = findViewById<View?>(R.id.etEditItem) as EditText
+
         data.putExtra("item", editTask!!.text.toString())
+        data.putExtra("due", dueTime)
         data.putExtra("position", position)
 
         setResult(RESULT_OK, data)
