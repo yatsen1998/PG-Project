@@ -46,34 +46,31 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <DatePicker
-        android:id="@+id/datePicker"
-        android:layout_width="274dp"
-        android:layout_height="145dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="44dp"
-        android:layout_marginEnd="16dp"
-        android:calendarViewShown="false"
-        android:datePickerMode="spinner"
+    <EditText
+        android:id="@+id/etEditDate"
+        android:layout_width="259dp"
+        android:layout_height="39dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="32dp"
+        android:ems="8"
+        android:hint="Enter Date"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintHorizontal_bias="0.652"
         app:layout_constraintStart_toEndOf="@+id/dateEdit"
         app:layout_constraintTop_toBottomOf="@+id/etEditItem" />
 
-    <TimePicker
-        android:id="@+id/timePicker"
-        android:layout_width="274dp"
-        android:layout_height="145dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="52dp"
-        android:layout_marginEnd="16dp"
-        android:timePickerMode="spinner"
-        app:layout_constraintBottom_toBottomOf="parent"
+    <EditText
+        android:id="@+id/etEditTime"
+        android:layout_width="259dp"
+        android:layout_height="39dp"
+        android:layout_marginTop="48dp"
+        android:layout_marginEnd="32dp"
+        android:ems="8"
+        android:hint="Enter Time"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toEndOf="@+id/timeEdit"
-        app:layout_constraintTop_toBottomOf="@+id/datePicker"
-        app:layout_constraintVertical_bias="0.346" />
+        app:layout_constraintHorizontal_bias="0.673"
+        app:layout_constraintStart_toEndOf="@+id/dateEdit"
+        app:layout_constraintTop_toBottomOf="@+id/etEditDate" />
 
     <Button
         android:id="@+id/btnConfirm"
@@ -99,10 +96,10 @@
 
     <TextView
         android:id="@+id/dateEdit"
-        android:layout_width="57dp"
-        android:layout_height="28dp"
+        android:layout_width="58dp"
+        android:layout_height="29dp"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="104dp"
+        android:layout_marginTop="24dp"
         android:lineSpacingExtra="8sp"
         android:text="Date"
         android:textSize="20sp"
@@ -115,7 +112,7 @@
         android:layout_width="56dp"
         android:layout_height="27dp"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="244dp"
+        android:layout_marginTop="60dp"
         android:lineSpacingExtra="8sp"
         android:text="Time"
         android:textSize="20sp"
