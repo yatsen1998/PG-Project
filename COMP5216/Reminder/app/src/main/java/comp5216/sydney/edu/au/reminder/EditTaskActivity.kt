@@ -87,7 +87,10 @@ class EditTaskActivity : AppCompatActivity() {
         val elapsedSeconds = different / secondsInMilli
         Log.i( "EditTaskActivity",
             "$elapsedDays days, $elapsedHours hours, $elapsedMinutes minutes, $elapsedSeconds seconds")
-        return "$elapsedDays days, $elapsedHours hours, $elapsedMinutes minutes, $elapsedSeconds seconds"
+        if (different > 0)
+            return "$elapsedDays days, $elapsedHours hours, $elapsedMinutes minutes, $elapsedSeconds seconds"
+        else
+            return "OVERDUE"
     }
 
 
