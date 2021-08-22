@@ -14,7 +14,7 @@ class TasksAdapter(context: Context, val resource: Int, val text: Int, list: Arr
         val text1 = view.findViewById<View>(android.R.id.text1) as TextView
         val text2 = view.findViewById<View>(android.R.id.text2) as TextView
         text1.text = getItem(position)!!.title
-        text2.text = getItem(position)!!.dueTime
+        text2.text = getItem(position)!!.dueTimeString
         return view
     }
 }

@@ -6,5 +6,6 @@ import kotlin.collections.ArrayList
 
 class Task {
     var title: String = ""
-    var dueTime: String = ""
+    var dueTimeString: String = ""
+    var dueTimeLong: Long = Long.MAX_VALUE
 }

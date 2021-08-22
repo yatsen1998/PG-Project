@@ -16,7 +16,6 @@ import java.text.ParsePosition
 import java.text.SimpleDateFormat
 import java.util.*
 
-
 class EditTaskActivity : AppCompatActivity() {
     var position = 0
     var editTask: EditText? = null
@@ -71,28 +70,26 @@ class EditTaskActivity : AppCompatActivity() {
         })
     }
 
-    fun getDifference(startDate: Date, endDate: Date):String {
-        //milliseconds
+    fun getDifferenceString(startDate: Date, endDate: Date): String {
         var different = endDate.time - startDate.time
         val secondsInMilli: Long = 1000
         val minutesInMilli = secondsInMilli * 60
         val hoursInMilli = minutesInMilli * 60
         val daysInMilli = hoursInMilli * 24
         val elapsedDays = different / daysInMilli
-        different = different % daysInMilli
+        different %= daysInMilli
         val elapsedHours = different / hoursInMilli
-        different = different % hoursInMilli
+        different %= hoursInMilli
         val elapsedMinutes = different / minutesInMilli
-        different = different % minutesInMilli
+        different %= minutesInMilli
         val elapsedSeconds = different / secondsInMilli
         Log.i( "EditTaskActivity",
             "$elapsedDays days, $elapsedHours hours, $elapsedMinutes minutes, $elapsedSeconds seconds")
-        if (different > 0)
-            return "$elapsedDays days, $elapsedHours hours, $elapsedMinutes minutes, $elapsedSeconds seconds"
+        return if (different > 0)
+            "$elapsedDays days, $elapsedHours hours, $elapsedMinutes minutes, $elapsedSeconds seconds"
         else
-            return "OVERDUE"
+            "OVERDUE"
     }
-
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun onSubmitClick(v: View?) {
@@ -102,15 +99,16 @@ class EditTaskActivity : AppCompatActivity() {
 
         val cal = Calendar.getInstance()
         val curDate = cal.time
-
-        val dueTime = getDifference(curDate, dueDate)
+        val dueTimeString = getDifferenceString(curDate, dueDate)
+        val dueTimeLong = dueDate.time - curDate.time
 
         val data = Intent()
 
         editTask = findViewById<View?>(R.id.etEditItem) as EditText
 
         data.putExtra("item", editTask!!.text.toString())
-        data.putExtra("due", dueTime)
+        data.putExtra("dueString", dueTimeString)
+        data.putExtra("dueLong", dueTimeLong)
         data.putExtra("position", position)
 
         setResult(RESULT_OK, data)
