@@ -11,6 +11,10 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import kotlinx.coroutines.*
+import org.apache.commons.io.FileUtils
+import java.io.File
+import java.io.IOException
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
@@ -19,6 +23,7 @@ class MainActivity : AppCompatActivity() {
     var listView: ListView? = null
     var tasks: ArrayList<Task>? = null
     var tasksAdapter: TasksAdapter? = null
+    var taskDao: TaskDao? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,13 +31,19 @@ class MainActivity : AppCompatActivity() {
 
         listView = findViewById<View?>(R.id.lstViewMain) as ListView
 
-        val task = Task()
-        task.title = "Test1"
-        task.dueTimeString = "date"
-        task.dueTimeLong = Long.MAX_VALUE
+        val applicationScope = CoroutineScope(SupervisorJob())
+        val database by lazy { TaskDB.getDatabase(this, applicationScope) }
+        taskDao = database.TaskDao()
+        // Must call it before creating the adapter, because it references the right item list
+        readItemsFromDatabase(taskDao!!)
 
-        tasks =ArrayList()
-        tasks!!.add(task)
+//        val task = Task()
+//        task.title = "Test1"
+//        task.dueTimeString = "date"
+//        task.dueTimeLong = Long.MAX_VALUE
+//
+//        tasks = ArrayList()
+//        tasks!!.add(task)
 
         tasksAdapter = TasksAdapter(
             this,
@@ -61,8 +72,9 @@ class MainActivity : AppCompatActivity() {
             Log.i("MainActivity", task.dueTimeLong.toString())
             tasks?.add(task)
 
-            tasks?.sortBy { task -> task.dueTimeLong }
-            tasks?.forEach { Log.i("MainActivity", it.dueTimeString) }
+//            tasks?.sortBy { task -> task.dueTimeLong }
+//            tasks?.forEach { Log.i("MainActivity", it.dueTimeString) }
+            saveItemsToDatabase()
 
             tasksAdapter?.notifyDataSetChanged()
         }
@@ -82,11 +94,12 @@ class MainActivity : AppCompatActivity() {
                 val builder = AlertDialog.Builder(this@MainActivity)
                 builder.setTitle(R.string.dialog_delete_title)
                     .setMessage(R.string.dialog_delete_msg)
-                    .setPositiveButton(R.string.delete) { dialogInterface, i->
-                            tasks?.removeAt(position)
-                            tasksAdapter?.notifyDataSetChanged()
+                    .setPositiveButton(R.string.delete) { dialogInterface, i ->
+                        tasks?.removeAt(position)
+                        tasksAdapter?.notifyDataSetChanged()
+                        saveItemsToDatabase()
                     }
-                    .setNegativeButton(R.string.cancel) {dialogInterface, i->
+                    .setNegativeButton(R.string.cancel) { dialogInterface, i ->
 
                     }
                 builder.create().show()
@@ -105,6 +118,7 @@ class MainActivity : AppCompatActivity() {
                 tasks!![position!!].title = editedTitle!!
                 tasks!![position].dueTimeString = editedDueString!!
                 Log.i("Update item in list", "$editedTitle, position: $position")
+                saveItemsToDatabase()
                 tasksAdapter?.notifyDataSetChanged()
             }
         }
@@ -125,5 +139,52 @@ class MainActivity : AppCompatActivity() {
                 launcher.launch(intent)
                 tasksAdapter?.notifyDataSetChanged()
             }
+    }
+
+    // read items from the database
+    private fun readItemsFromDatabase(taskDao: TaskDao) {
+        try {
+            tasks = ArrayList()
+            GlobalScope.launch {
+                getItems()
+            }
+        }catch (e: Exception){
+            Log.i("Exception thrown", e.message.toString())
+        }
+    }
+    suspend fun getItems() {
+        withContext(Dispatchers.IO) {
+        // Get entities from database on IO thread.
+        val titles = taskDao?.getAllIds()
+            titles?.forEach { id ->
+            val taskModel = taskDao?.getById(id)
+                val task = Task()
+                task.title = taskModel!!.taskTitle
+                task.dueTimeString = taskModel.taskDueString
+                task.dueTimeLong = taskModel.taskDueLong
+            tasks!!.add(task)
+            }
+        }
+    }
+    // write items to the database
+    private fun saveItemsToDatabase() {
+        try {
+            GlobalScope.launch {
+                deleteAll()
+                for (task in tasks!!) {
+                    Log.i("SQLite saved item", task.title)
+                    val item = TaskModel(task.title, task.dueTimeString, task.dueTimeLong)
+                    insert(item)
+                }
+            }
+        }catch (e:Exception){
+            Log.i("Exception thrown", e.message.toString())
+        }
+    }
+    suspend fun insert(task: TaskModel) {
+        taskDao?.insert(task)
+    }
+    suspend fun deleteAll() {
+        taskDao?.deleteAll()
     }
 }
