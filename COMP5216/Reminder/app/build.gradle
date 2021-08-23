@@ -33,11 +33,22 @@ android {
 
 dependencies {
 
-    implementation 'androidx.core:core-ktx:1.3.2'
+    implementation 'androidx.core:core-ktx:1.6.0'
     implementation 'androidx.appcompat:appcompat:1.3.1'
     implementation 'com.google.android.material:material:1.4.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.0'
+    implementation files('libs/commons-io-2.11.0.jar')
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+
+    apply plugin: 'kotlin-kapt'
+    // coroutine components
+    api "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1"
+    api "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0"
+    // Room components
+    def room_version = "2.3.0"
+    implementation "androidx.room:room-ktx:$room_version"
+    kapt "androidx.room:room-compiler:$room_version"
+    androidTestImplementation "androidx.room:room-testing:$room_version"
 }
