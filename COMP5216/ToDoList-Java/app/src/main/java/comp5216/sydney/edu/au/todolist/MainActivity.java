@@ -24,7 +24,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
     // Define variables
     ListView listView;
-    ArrayList<String> items;
+    ArrayList<String> items;192
     ArrayAdapter<String> itemsAdapter;
     EditText addItemEditText;
 
