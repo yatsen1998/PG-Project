@@ -80,7 +80,7 @@
         android:layout_marginStart="16dp"
         android:layout_marginTop="60dp"
         android:lineSpacingExtra="8sp"
-        android:text="@string/set_task_msg"
+        android:text="@string/set_time_msg"
         android:textSize="20sp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"

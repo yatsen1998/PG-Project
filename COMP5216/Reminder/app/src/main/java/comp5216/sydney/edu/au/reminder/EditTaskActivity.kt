@@ -158,9 +158,7 @@ class EditTaskActivity : AppCompatActivity() {
 
                 finish()
             }
-            .setNegativeButton(R.string.cancel) { dialogInterface, i ->
 
-            }
         builder.create().show()
     }
 }

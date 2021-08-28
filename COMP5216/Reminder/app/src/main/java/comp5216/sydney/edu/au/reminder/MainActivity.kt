@@ -82,11 +82,10 @@ class MainActivity : AppCompatActivity() {
             tasks?.add(task)
 
             //sorts tasks by dueTimeLong
-            tasks?.sortBy { task.dueTimeLong }
-
+            tasks?.sortBy { task -> task.dueTimeLong }
             saveItemsToDatabase()
-
             tasksAdapter?.notifyDataSetChanged()
+
         }
     }
 
@@ -107,6 +106,7 @@ class MainActivity : AppCompatActivity() {
                     .setPositiveButton(R.string.delete) { dialogInterface, i ->
                         tasks?.removeAt(position)
                         tasksAdapter?.notifyDataSetChanged()
+                        tasks?.sortBy { task -> task.dueTimeLong }
                         saveItemsToDatabase()
                     }
                     .setNegativeButton(R.string.cancel) { dialogInterface, i ->
@@ -122,12 +122,14 @@ class MainActivity : AppCompatActivity() {
             if (result?.resultCode == RESULT_OK) {
                 val editedTitle = result.data?.getStringExtra("item")
                 val editedDueString = result.data?.getStringExtra("dueString")
-                val editedDueInt = result.data?.getLongExtra("dueLong", Long.MAX_VALUE)
+                val editedDueLong = result.data?.getLongExtra("dueLong", Long.MAX_VALUE)
                 val position = result.data?.getIntExtra("position", -1)
 
                 tasks!![position!!].title = editedTitle!!
                 tasks!![position].dueTimeString = editedDueString!!
+                tasks!![position].dueTimeLong = editedDueLong!!
                 Log.i("Update item in list", "$editedTitle, position: $position")
+                tasks?.sortBy { task -> task.dueTimeLong }
                 saveItemsToDatabase()
                 tasksAdapter?.notifyDataSetChanged()
             }
@@ -154,7 +156,7 @@ class MainActivity : AppCompatActivity() {
     // read items from the database
     private fun readItemsFromDatabase(taskDao: TaskDao) {
         try {
-            tasks = ArrayList()
+            tasks = ArrayList<Task>()
             GlobalScope.launch {
                 getItems()
             }
@@ -166,8 +168,8 @@ class MainActivity : AppCompatActivity() {
     suspend fun getItems() {
         withContext(Dispatchers.IO) {
             // Get entities from database on IO thread.
-            val titles = taskDao?.getAllIds()
-            titles?.forEach { id ->
+            val ids = taskDao?.getAllIds()
+            ids?.forEach { id ->
                 val taskModel = taskDao?.getById(id)
                 val task = Task()
                 task.title = taskModel!!.taskTitle
