@@ -27,9 +27,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end|bottom"
+            android:layout_margin="32dp"
+            android:backgroundTint="#00BCD4"
             android:contentDescription="@string/AddTask"
             android:onClick="onAddTaskClick"
-            android:layout_margin="32dp" />
+            android:src="@drawable/addimage" />
 
     </FrameLayout>
 </LinearLayout>

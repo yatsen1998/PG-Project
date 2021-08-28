@@ -12,7 +12,7 @@
         android:layout_height="27dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="28dp"
-        android:text="TextView"
+        android:text="@string/editTaskHeader"
         android:textAlignment="center"
         android:textSize="20sp"
         android:textStyle="bold"
@@ -21,14 +21,15 @@
 
     <EditText
         android:id="@+id/etEditItem"
-        android:layout_width="378dp"
-        android:layout_height="48dp"
+        android:layout_width="365dp"
+        android:layout_height="150dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="7dp"
         android:layout_marginEnd="16dp"
-        android:hint="Remind"
-        android:text="Write Something..."
+        android:hint="@string/edit_hint"
+        android:text="@string/edit_hint_message"
         android:visibility="visible"
+        android:gravity="top"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/dividerEdit" />
@@ -50,10 +51,10 @@
         android:id="@+id/etEditDate"
         android:layout_width="259dp"
         android:layout_height="39dp"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="52dp"
         android:layout_marginEnd="32dp"
         android:ems="8"
-        android:hint="Enter Date"
+        android:hint="@string/date_hint"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.652"
         app:layout_constraintStart_toEndOf="@+id/dateEdit"
@@ -66,11 +67,37 @@
         android:layout_marginTop="48dp"
         android:layout_marginEnd="32dp"
         android:ems="8"
-        android:hint="Enter Time"
+        android:hint="@string/time_hint"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.673"
         app:layout_constraintStart_toEndOf="@+id/dateEdit"
         app:layout_constraintTop_toBottomOf="@+id/etEditDate" />
+
+    <TextView
+        android:id="@+id/timeEdit"
+        android:layout_width="56dp"
+        android:layout_height="27dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="60dp"
+        android:lineSpacingExtra="8sp"
+        android:text="@string/set_task_msg"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/dateEdit" />
+
+    <TextView
+        android:id="@+id/dateEdit"
+        android:layout_width="58dp"
+        android:layout_height="29dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="52dp"
+        android:lineSpacingExtra="8sp"
+        android:text="@string/set_date_msg"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/etEditItem" />
 
     <Button
         android:id="@+id/btnConfirm"
@@ -79,7 +106,7 @@
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
         android:onClick="onSubmitClick"
-        android:text="Submit"
+        android:text="@string/submit_edit_btn"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
@@ -90,34 +117,8 @@
         android:layout_marginStart="16dp"
         android:layout_marginBottom="16dp"
         android:onClick="onCancelClick"
-        android:text="Cancel"
+        android:text="@string/cancel_edit_btn"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
-
-    <TextView
-        android:id="@+id/dateEdit"
-        android:layout_width="58dp"
-        android:layout_height="29dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="24dp"
-        android:lineSpacingExtra="8sp"
-        android:text="Date"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/etEditItem" />
-
-    <TextView
-        android:id="@+id/timeEdit"
-        android:layout_width="56dp"
-        android:layout_height="27dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="60dp"
-        android:lineSpacingExtra="8sp"
-        android:text="Time"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/dateEdit" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

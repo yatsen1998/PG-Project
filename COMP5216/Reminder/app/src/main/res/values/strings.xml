@@ -9,4 +9,13 @@
     <string name="delete">Delete</string>
     <string name="cancel">Cancel</string>
     <string name="edit">Edit</string>
+    <string name="editTaskHeader">Edit</string>
+    <string name="edit_hint">Remind</string>
+    <string name="edit_hint_message">Write Something Here…</string>
+    <string name="date_hint">Reset/Set Task Date</string>
+    <string name="time_hint">Reset/Set Task Time</string>
+    <string name="set_task_msg">Task</string>
+    <string name="set_date_msg">Date</string>
+    <string name="submit_edit_btn">Submit</string>
+    <string name="cancel_edit_btn">Cancel</string>
 </resources>

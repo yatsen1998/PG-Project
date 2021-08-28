@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package comp5216.sydney.edu.au.reminder
 
 import android.content.Intent
@@ -12,12 +28,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.*
-import org.apache.commons.io.FileUtils
-import java.io.File
-import java.io.IOException
 import java.util.*
 import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
+
+/**
+ * Handles the main activity
+ */
 
 class MainActivity : AppCompatActivity() {
     var listView: ListView? = null
@@ -37,14 +53,7 @@ class MainActivity : AppCompatActivity() {
         // Must call it before creating the adapter, because it references the right item list
         readItemsFromDatabase(taskDao!!)
 
-//        val task = Task()
-//        task.title = "Test1"
-//        task.dueTimeString = "date"
-//        task.dueTimeLong = Long.MAX_VALUE
-//
-//        tasks = ArrayList()
-//        tasks!!.add(task)
-
+        //Uses simple_list_item_2 to control two texts displayed in each item
         tasksAdapter = TasksAdapter(
             this,
             android.R.layout.simple_list_item_2,
@@ -72,8 +81,9 @@ class MainActivity : AppCompatActivity() {
             Log.i("MainActivity", task.dueTimeLong.toString())
             tasks?.add(task)
 
-            tasks?.sortBy { task -> task.dueTimeLong }
-//            tasks?.forEach { Log.i("MainActivity", it.dueTimeString) }
+            //sorts tasks by dueTimeLong
+            tasks?.sortBy { task.dueTimeLong }
+
             saveItemsToDatabase()
 
             tasksAdapter?.notifyDataSetChanged()
@@ -148,24 +158,26 @@ class MainActivity : AppCompatActivity() {
             GlobalScope.launch {
                 getItems()
             }
-        }catch (e: Exception){
+        } catch (e: Exception) {
             Log.i("Exception thrown", e.message.toString())
         }
     }
+
     suspend fun getItems() {
         withContext(Dispatchers.IO) {
-        // Get entities from database on IO thread.
-        val titles = taskDao?.getAllIds()
+            // Get entities from database on IO thread.
+            val titles = taskDao?.getAllIds()
             titles?.forEach { id ->
-            val taskModel = taskDao?.getById(id)
+                val taskModel = taskDao?.getById(id)
                 val task = Task()
                 task.title = taskModel!!.taskTitle
                 task.dueTimeString = taskModel.taskDueString
                 task.dueTimeLong = taskModel.taskDueLong
-            tasks!!.add(task)
+                tasks!!.add(task)
             }
         }
     }
+
     // write items to the database
     private fun saveItemsToDatabase() {
         try {
@@ -177,14 +189,16 @@ class MainActivity : AppCompatActivity() {
                     insert(item)
                 }
             }
-        }catch (e:Exception){
+        } catch (e: Exception) {
             Log.i("Exception thrown", e.message.toString())
         }
     }
-    suspend fun insert(task: TaskModel) {
+
+    private suspend fun insert(task: TaskModel) {
         taskDao?.insert(task)
     }
-    suspend fun deleteAll() {
+
+    private suspend fun deleteAll() {
         taskDao?.deleteAll()
     }
 }
