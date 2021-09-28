@@ -20,13 +20,11 @@ import android.annotation.SuppressLint
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.text.InputType
 import android.util.Log
 import android.view.View
 import android.widget.EditText
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import java.text.SimpleDateFormat
@@ -75,7 +73,8 @@ class EditTaskActivity : AppCompatActivity() {
             val picker = DatePickerDialog(
                 this,
                 { view, year, monthOfYear, dayOfMonth ->
-                    editDate!!.setText(dayOfMonth.toString() + "/" + (monthOfYear + 1) + "/" + year) },
+                    editDate!!.setText(dayOfMonth.toString() + "/" + (monthOfYear + 1) + "/" + year)
+                },
                 year, month, day
             )
             picker.show()
@@ -90,9 +89,11 @@ class EditTaskActivity : AppCompatActivity() {
             val hour = cldr[Calendar.HOUR_OF_DAY]
             val minutes = cldr[Calendar.MINUTE]
             // time picker dialog
-            val picker = TimePickerDialog(this@EditTaskActivity,
+            val picker = TimePickerDialog(
+                this@EditTaskActivity,
                 { tp, sHour, sMinute ->
-                    editTime!!.setText("$sHour:$sMinute") }, hour, minutes, true
+                    editTime!!.setText("$sHour:$sMinute")
+                }, hour, minutes, true
             )
             picker.show()
         })
@@ -127,7 +128,7 @@ class EditTaskActivity : AppCompatActivity() {
 
         val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm")
         val dueDate: Date =
-                sdf.parse(editDate!!.text.toString() + " " + editTime!!.text.toString())
+            sdf.parse(editDate!!.text.toString() + " " + editTime!!.text.toString())
 
         val cal = Calendar.getInstance()
         val curDate = cal.time
