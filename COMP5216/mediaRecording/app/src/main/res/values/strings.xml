@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">mediaRecording</string>
+    <string name="RequestCamera">request for camera</string>
+    <string name="RequestCloudSynchronize">request for cloud synchronize</string>
+</resources>
