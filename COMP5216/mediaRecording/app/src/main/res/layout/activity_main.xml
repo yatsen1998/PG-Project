@@ -50,6 +50,7 @@
             android:backgroundTint="#EEEEEE"
             android:contentDescription="@string/RequestCloudSynchronize"
             android:src="@drawable/cloud"
+            android:onClick="onCloudSyncClick"
             app:backgroundTint="#EEEEEE"
             app:fabSize="mini" />
 

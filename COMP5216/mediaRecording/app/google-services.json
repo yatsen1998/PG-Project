@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "789672036063",
+    "project_id": "mediarecording-dff5f",
+    "storage_bucket": "mediarecording-dff5f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:789672036063:android:3174be076e652908888b6a",
+        "android_client_info": {
+          "package_name": "comp5216.sydney.edu.au.mediarecording"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "789672036063-48skc7bl9h7tpmhhk1gkp7tjbf7plufb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCmsCfhg6k_8zMAHnRyMnuZ7s7AA346I38"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "789672036063-48skc7bl9h7tpmhhk1gkp7tjbf7plufb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

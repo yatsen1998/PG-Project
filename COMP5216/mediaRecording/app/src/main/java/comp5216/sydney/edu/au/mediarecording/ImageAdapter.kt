@@ -7,8 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
-import comp5216.sydney.edu.au.mediarecording.SquareImageView
-import java.util.ArrayList
+import java.util.*
 
 class ImageAdapter(c: Context, images: ArrayList<ByteArray>) : BaseAdapter() {
     var context: Context = c
