@@ -25,7 +25,35 @@
         android:layout_height="match_parent">
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/mainFabRequestCamera"
+            android:id="@+id/mainFabTakeImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginEnd="32dp"
+            android:layout_marginBottom="32dp"
+            android:contentDescription=""
+            android:onClick="onRequestTakeImage"
+            android:src="@drawable/image"
+            app:backgroundTint="#EEEEEE"
+            app:fabSize="mini" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/mainFabTakeVideo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginEnd="32dp"
+            android:layout_marginBottom="32dp"
+            android:contentDescription = ""
+            android:onClick="onRequestTakeVideo"
+            android:src="@drawable/video"
+            app:backgroundTint="#EEEEEE"
+            app:fabSize="mini" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/mainFabCameraMenu"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
@@ -35,24 +63,22 @@
             android:backgroundTint="#EEEEEE"
             android:contentDescription="@string/RequestCamera"
             android:src="@drawable/camera"
-            android:onClick="onRequestCameraClick"
             app:backgroundTint="#EEEEEE"
-            app:fabSize="mini" />
+            app:fabSize="auto" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/mainFabCloud"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_above="@id/mainFabRequestCamera"
+            android:layout_above="@id/mainFabCameraMenu"
             android:layout_alignParentEnd="true"
             android:layout_marginEnd="32dp"
-            android:layout_marginBottom="16dp"
-            android:backgroundTint="#EEEEEE"
+            android:layout_marginBottom="32dp"
             android:contentDescription="@string/RequestCloudSynchronize"
-            android:src="@drawable/cloud"
             android:onClick="onCloudSyncClick"
+            android:src="@drawable/cloud"
             app:backgroundTint="#EEEEEE"
-            app:fabSize="mini" />
+            app:fabSize="auto" />
 
     </RelativeLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
