@@ -1,20 +1,17 @@
 package comp5216.sydney.edu.au.mediarecording
 
-import android.app.AlertDialog
-import android.app.ProgressDialog
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.ThumbnailUtils
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
-import android.net.NetworkInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
-import android.os.SystemClock.sleep
 import android.provider.MediaStore
 import android.util.Log
 import android.view.View
@@ -25,46 +22,47 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.StorageReference
-import com.google.firebase.storage.UploadTask
-import com.google.firebase.storage.ktx.storage
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 
-
 class MainActivity : AppCompatActivity() {
+    // Components
     var gridView: GridView? = null
     var cameraMenuButton: FloatingActionButton? = null
     var imageButton: FloatingActionButton? = null
     var videoButton: FloatingActionButton? = null
+    private var isFABOpen = false
 
+    // Arrays
     var imageByteArray = ArrayList<ByteArray>()
     var mediaArray = ArrayList<File>()
 
+    // Default media file name and Uri
     var imageFileName: String = "photo.jpg"
     var videoFileName: String = "video.mp4"
-
-    var marshmallowPermission = MarshmallowPermission(this)
     private var imageUri: Uri? = null
     private var videoUri: Uri? = null
 
-    private var isFABOpen = false
-
+    // Permission control, including Android and Firebase
+    var marshmallowPermission = MarshmallowPermission(this)
     var auth = FirebaseAuth.getInstance()
-    var storage: FirebaseStorage? = null
-    var storageReference: StorageReference? = null
+
+    // Alarm and Sync handle
+    lateinit var syncHandler: SyncHandler
+    var alarmManager: AlarmManager? = null
+    var pendingIntent: PendingIntent? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        gridView = findViewById<View?>(R.id.mainGridView) as GridView
+        ins = this;
 
+        // Find mainView component
+        gridView = findViewById<View?>(R.id.mainGridView) as GridView
         cameraMenuButton = findViewById(R.id.mainFabCameraMenu)
         imageButton = findViewById(R.id.mainFabTakeImage)
         videoButton = findViewById(R.id.mainFabTakeVideo)
@@ -72,10 +70,8 @@ class MainActivity : AppCompatActivity() {
         //val user = auth.currentUser
         //if (user != null) {
         //} else {
-            signInAnonymously()
+        signInAnonymously()
         //}
-        storage = Firebase.storage
-        storageReference = storage!!.reference
 
         cameraMenuButton?.setOnClickListener {
             if (!isFABOpen) {
@@ -83,6 +79,42 @@ class MainActivity : AppCompatActivity() {
             } else {
                 closeFABMenu()
             }
+        }
+
+        alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        updateAlarmManager(mediaArray)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Cancels the pendingIntent if it is no longer needed after this activity is destroyed.
+        alarmManager!!.cancel(pendingIntent)
+    }
+
+    fun updateAlarmManager(mediaArray: ArrayList<File>) {
+        alarmManager!!.cancel(pendingIntent)
+        if (mediaArray.size != 0) {
+            val intent = Intent(this, SyncReceiver::class.java)
+            intent.putExtra("mediaArray", mediaArray)
+            pendingIntent = PendingIntent.getBroadcast(
+                this,
+                SYNC_REQUEST_CODE,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT
+            )
+
+            val calendar = Calendar.getInstance()
+            calendar.timeInMillis = System.currentTimeMillis()
+            calendar.set(Calendar.HOUR_OF_DAY, 2)
+            calendar.set(Calendar.MINUTE, 0)
+
+            // Starts the alarm manager
+            alarmManager!!.setRepeating(
+                AlarmManager.RTC,
+                calendar.timeInMillis,
+                AlarmManager.INTERVAL_DAY,
+                pendingIntent
+            )
         }
     }
 
@@ -96,11 +128,12 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     // If sign in fails, display a message to the user.
                     Log.w("SignIn", "signInAnonymously:failure", task.exception)
-                    Toast.makeText(baseContext, "Authentication failed.",
-                        Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        baseContext, "Authentication failed.",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
-        // [END signin_anonymously]
     }
 
     private fun showFABMenu() {
@@ -127,6 +160,7 @@ class MainActivity : AppCompatActivity() {
             // Create a photo file and its reference
             val imageFile = getMediaFile("image")
             mediaArray.add(imageFile)
+            updateAlarmManager(mediaArray)
 
             imageUri = getUriFromFile(imageFile)
             // Add extended data to the intent
@@ -148,10 +182,11 @@ class MainActivity : AppCompatActivity() {
         ) {
             marshmallowPermission.requestPermissionForCamera()
         } else {
-            val intent= Intent(MediaStore.ACTION_VIDEO_CAPTURE)
+            val intent = Intent(MediaStore.ACTION_VIDEO_CAPTURE)
 
             val videoFile = getMediaFile("video")
             mediaArray.add(videoFile)
+            updateAlarmManager(mediaArray)
 
             videoUri = getUriFromFile(videoFile)
             // Add extended data to the intent
@@ -165,6 +200,11 @@ class MainActivity : AppCompatActivity() {
                 startActivityForResult(intent, MY_PERMISSIONS_REQUEST_RECORD_VIDEO)
             }
         }
+    }
+
+    fun onCloudSyncClick(view: View?) {
+        syncHandler = SyncHandler(this, mediaArray)
+        syncHandler.run()
     }
 
     fun getUriFromFile(mediaFile: File): Uri? {
@@ -254,7 +294,8 @@ class MainActivity : AppCompatActivity() {
         } else if (requestCode == MY_PERMISSIONS_REQUEST_RECORD_VIDEO) {
             if (resultCode == RESULT_OK) {
                 val videoThumbnail = ThumbnailUtils.createVideoThumbnail(
-                    videoUri!!.path.toString(),  MediaStore.Video.Thumbnails.MICRO_KIND)
+                    videoUri!!.path.toString(), MediaStore.Video.Thumbnails.MICRO_KIND
+                )
 
                 val bytes = ByteArrayOutputStream()
                 videoThumbnail!!.compress(Bitmap.CompressFormat.JPEG, 90, bytes)
@@ -271,76 +312,17 @@ class MainActivity : AppCompatActivity() {
         gridView!!.adapter = ImageAdapter(this, imageByteArray)
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
-    fun onCloudSyncClick(view: View?) {
-        if (!isWifiOn(this)) {
-            val builder = AlertDialog.Builder(this@MainActivity)
-            builder.setTitle(R.string.dialog_sync_anyway_title)
-                .setMessage(R.string.dialog_sync_anyway_msg)
-                .setPositiveButton(R.string.confirm) { dialogInterface, i ->
-                    doSync(mediaArray)
-                }
-                .setNegativeButton(R.string.cancel) { dialogInterface, i ->
-
-                }
-            builder.create().show()
-        } else {
-            doSync(mediaArray)
-        }
-    }
-
-    fun isWifiOn(context: Context): Boolean {
-        var connectivityManager: ConnectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        var activeNetInfo: NetworkInfo? = connectivityManager.getActiveNetworkInfo();
-        if (activeNetInfo != null && activeNetInfo.getType() == ConnectivityManager.TYPE_WIFI) {
-            return true;
-        }
-        return false;
-    }
-
-    fun doSync(mediaArray: ArrayList<File>) {
-        if (mediaArray.size == 0) {
-            Toast.makeText(
-                this, "No Picture to upload now!", Toast.LENGTH_SHORT
-            ).show()
-            return
-        }
-
-        // Code for showing progressDialog while uploading
-        val progressDialog = ProgressDialog(this)
-        progressDialog.setTitle("Uploading...")
-        progressDialog.show()
-
-        var uploadTask: UploadTask? = null
-        var i = 0
-        // Defining the child of storageReference
-        while(i < mediaArray.size) {
-            if (mediaArray[i].absolutePath.endsWith("jpg")) {
-                uploadTask = storageReference?.child("images/" + mediaArray[i].name)?.putFile(getUriFromFile(mediaArray[i])!!)
-            } else if (mediaArray[i].absolutePath.endsWith("mp4")) {
-                uploadTask = storageReference?.child("movies/" + mediaArray[i].name)?.putFile(getUriFromFile(mediaArray[i])!!)
-            }
-            uploadTask!!.addOnSuccessListener {
-                //// Image uploaded successfully, dismiss the dialog
-                progressDialog.dismiss()
-                Toast.makeText(
-                    this, "FIle Uploaded!!", Toast.LENGTH_SHORT
-                ).show()
-            } .addOnFailureListener {
-                progressDialog.dismiss()
-                Toast.makeText(
-                    this, "Sync Failed!", Toast.LENGTH_SHORT
-                ).show()
-            }
-            i += 1
-        }
-    }
-
     companion object {
-        //request codes
+        //request codess
+        private const val SYNC_REQUEST_CODE = 100
         private const val MY_PERMISSIONS_REQUEST_OPEN_CAMERA: Int = 101
         private const val MY_PERMISSIONS_REQUEST_READ_PHOTOS: Int = 102
         private const val MY_PERMISSIONS_REQUEST_RECORD_VIDEO: Int = 103
         private const val MY_PERMISSIONS_REQUEST_READ_VIDEOS: Int = 104
+
+        var ins: MainActivity? = null
+        fun getInstance(): MainActivity? {
+            return ins
+        }
     }
 }
