@@ -1,31 +1,40 @@
 package comp5216.sydney.edu.au.mediarecording
 
+import android.app.AlertDialog
 import android.app.ProgressDialog
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.ThumbnailUtils
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.net.NetworkInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.SystemClock.sleep
 import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import android.widget.GridView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
+import com.google.firebase.storage.UploadTask
 import com.google.firebase.storage.ktx.storage
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
-import com.google.android.material.floatingactionbutton.FloatingActionButton
+import kotlin.collections.ArrayList
 
 
 class MainActivity : AppCompatActivity() {
@@ -34,8 +43,8 @@ class MainActivity : AppCompatActivity() {
     var imageButton: FloatingActionButton? = null
     var videoButton: FloatingActionButton? = null
 
-    var imageArray = ArrayList<ByteArray>()
-    var videoArray = ArrayList<ByteArray>()
+    var imageByteArray = ArrayList<ByteArray>()
+    var mediaArray = ArrayList<File>()
 
     var imageFileName: String = "photo.jpg"
     var videoFileName: String = "video.mp4"
@@ -60,10 +69,11 @@ class MainActivity : AppCompatActivity() {
         imageButton = findViewById(R.id.mainFabTakeImage)
         videoButton = findViewById(R.id.mainFabTakeVideo)
 
-        val user = auth.currentUser
-        if (user == null) {
+        //val user = auth.currentUser
+        //if (user != null) {
+        //} else {
             signInAnonymously()
-        }
+        //}
         storage = Firebase.storage
         storageReference = storage!!.reference
 
@@ -74,8 +84,6 @@ class MainActivity : AppCompatActivity() {
                 closeFABMenu()
             }
         }
-
-        //setupGridviewListener()
     }
 
     private fun signInAnonymously() {
@@ -118,18 +126,9 @@ class MainActivity : AppCompatActivity() {
 
             // Create a photo file and its reference
             val imageFile = getMediaFile("image")
+            mediaArray.add(imageFile)
 
-            imageUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                /*7.0以上要通过FileProvider将File转化为Uri*/
-                FileProvider.getUriForFile(
-                    this,
-                    "comp5216.sydney.edu.au.mediarecording.fileProvider",
-                    imageFile
-                )
-            } else {
-                /*7.0以下则直接使用Uri的fromFile方法将File转化为Uri*/
-                Uri.fromFile(imageFile)
-            }
+            imageUri = getUriFromFile(imageFile)
             // Add extended data to the intent
             intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri)
 
@@ -152,18 +151,9 @@ class MainActivity : AppCompatActivity() {
             val intent= Intent(MediaStore.ACTION_VIDEO_CAPTURE)
 
             val videoFile = getMediaFile("video")
+            mediaArray.add(videoFile)
 
-            videoUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                /*7.0以上要通过FileProvider将File转化为Uri*/
-                FileProvider.getUriForFile(
-                    this,
-                    "comp5216.sydney.edu.au.mediarecording.fileProvider",
-                    videoFile
-                )
-            } else {
-                /*7.0以下则直接使用Uri的fromFile方法将File转化为Uri*/
-                Uri.fromFile(videoFile)
-            }
+            videoUri = getUriFromFile(videoFile)
             // Add extended data to the intent
             intent.putExtra(MediaStore.EXTRA_OUTPUT, videoUri)
 
@@ -176,6 +166,22 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    fun getUriFromFile(mediaFile: File): Uri? {
+        var mediaUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            /*7.0以上要通过FileProvider将File转化为Uri*/
+            FileProvider.getUriForFile(
+                this,
+                "comp5216.sydney.edu.au.mediarecording.fileProvider",
+                mediaFile
+            )
+        } else {
+            /*7.0以下则直接使用Uri的fromFile方法将File转化为Uri*/
+            Uri.fromFile(mediaFile)
+        }
+        return mediaUri
+    }
+
 
     // Returns the Uri for a photo/media stored on disk given the fileName and type
     private fun getMediaFile(type: String): File {
@@ -200,7 +206,7 @@ class MainActivity : AppCompatActivity() {
             }
             try {
                 // Create the file target for the media based on filename
-                mediaFile = File.createTempFile(imageFileName, ".jpg", imageStorageDir)
+                mediaFile = File(imageStorageDir, imageFileName)
             } catch (ex: Exception) {
                 Log.e("getImageFile", ex.stackTrace.toString())
             }
@@ -217,19 +223,16 @@ class MainActivity : AppCompatActivity() {
             }
             try {
                 // Create the file target for the media based on filename
-                mediaFile = File.createTempFile(imageFileName, ".mp4", videoStorageDir)
+                mediaFile = File(videoStorageDir, videoFileName)
             } catch (ex: Exception) {
-                Log.e("getImageFile", ex.stackTrace.toString())
+                Log.e("getVideoFile", ex.stackTrace.toString())
             }
             return mediaFile
         }
         return mediaFile
     }
 
-    private fun setupGridviewListener() {
-        //TODO
-    }
-
+    @RequiresApi(Build.VERSION_CODES.Q)
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == MY_PERMISSIONS_REQUEST_OPEN_CAMERA) {
@@ -240,7 +243,7 @@ class MainActivity : AppCompatActivity() {
                 )
                 val bytes = ByteArrayOutputStream()
                 imageThumbnail.compress(Bitmap.CompressFormat.JPEG, 90, bytes)
-                imageArray.add(bytes.toByteArray())
+                imageByteArray.add(bytes.toByteArray())
                 bytes.close()
             } else {
                 Toast.makeText(
@@ -251,11 +254,11 @@ class MainActivity : AppCompatActivity() {
         } else if (requestCode == MY_PERMISSIONS_REQUEST_RECORD_VIDEO) {
             if (resultCode == RESULT_OK) {
                 val videoThumbnail = ThumbnailUtils.createVideoThumbnail(
-                    videoUri!!.path.toString(), MediaStore.Video.Thumbnails.MICRO_KIND
-                )
+                    videoUri!!.path.toString(),  MediaStore.Video.Thumbnails.MICRO_KIND)
+
                 val bytes = ByteArrayOutputStream()
                 videoThumbnail!!.compress(Bitmap.CompressFormat.JPEG, 90, bytes)
-                imageArray.add(bytes.toByteArray())
+                imageByteArray.add(bytes.toByteArray())
                 bytes.close()
             } else {
                 Toast.makeText(
@@ -265,11 +268,38 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        gridView!!.adapter = ImageAdapter(this, imageArray)
+        gridView!!.adapter = ImageAdapter(this, imageByteArray)
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     fun onCloudSyncClick(view: View?) {
-        if (imageUri == null) {
+        if (!isWifiOn(this)) {
+            val builder = AlertDialog.Builder(this@MainActivity)
+            builder.setTitle(R.string.dialog_sync_anyway_title)
+                .setMessage(R.string.dialog_sync_anyway_msg)
+                .setPositiveButton(R.string.confirm) { dialogInterface, i ->
+                    doSync(mediaArray)
+                }
+                .setNegativeButton(R.string.cancel) { dialogInterface, i ->
+
+                }
+            builder.create().show()
+        } else {
+            doSync(mediaArray)
+        }
+    }
+
+    fun isWifiOn(context: Context): Boolean {
+        var connectivityManager: ConnectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        var activeNetInfo: NetworkInfo? = connectivityManager.getActiveNetworkInfo();
+        if (activeNetInfo != null && activeNetInfo.getType() == ConnectivityManager.TYPE_WIFI) {
+            return true;
+        }
+        return false;
+    }
+
+    fun doSync(mediaArray: ArrayList<File>) {
+        if (mediaArray.size == 0) {
             Toast.makeText(
                 this, "No Picture to upload now!", Toast.LENGTH_SHORT
             ).show()
@@ -281,19 +311,28 @@ class MainActivity : AppCompatActivity() {
         progressDialog.setTitle("Uploading...")
         progressDialog.show()
 
+        var uploadTask: UploadTask? = null
+        var i = 0
         // Defining the child of storageReference
-        val uploadTask = storageReference?.child("images/$imageFileName")?.putFile(imageUri!!)
-        uploadTask!!.addOnSuccessListener {
-            //// Image uploaded successfully, dismiss the dialog
-            progressDialog.dismiss()
-            Toast.makeText(
-                this, "Image Uploaded!!", Toast.LENGTH_SHORT
-            ).show()
-        } .addOnFailureListener {
+        while(i < mediaArray.size) {
+            if (mediaArray[i].absolutePath.endsWith("jpg")) {
+                uploadTask = storageReference?.child("images/" + mediaArray[i].name)?.putFile(getUriFromFile(mediaArray[i])!!)
+            } else if (mediaArray[i].absolutePath.endsWith("mp4")) {
+                uploadTask = storageReference?.child("movies/" + mediaArray[i].name)?.putFile(getUriFromFile(mediaArray[i])!!)
+            }
+            uploadTask!!.addOnSuccessListener {
+                //// Image uploaded successfully, dismiss the dialog
                 progressDialog.dismiss()
                 Toast.makeText(
-                    this, "Image Sync Failed!", Toast.LENGTH_SHORT
+                    this, "FIle Uploaded!!", Toast.LENGTH_SHORT
                 ).show()
+            } .addOnFailureListener {
+                progressDialog.dismiss()
+                Toast.makeText(
+                    this, "Sync Failed!", Toast.LENGTH_SHORT
+                ).show()
+            }
+            i += 1
         }
     }
 

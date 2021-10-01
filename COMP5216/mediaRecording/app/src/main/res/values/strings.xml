@@ -2,4 +2,8 @@
     <string name="app_name">mediaRecording</string>
     <string name="RequestCamera">request for camera</string>
     <string name="RequestCloudSynchronize">request for cloud synchronize</string>
+    <string name="dialog_sync_anyway_msg">You are not connected to WiFi. Would you like to proceed?</string>
+    <string name="dialog_sync_anyway_title">Warning</string>
+    <string name="confirm">Yes, sync anyway</string>
+    <string name="cancel">No</string>
 </resources>
