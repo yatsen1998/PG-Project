@@ -3,11 +3,13 @@ package comp5216.sydney.edu.au.mediarecording
 import android.app.AlertDialog
 import android.app.ProgressDialog
 import android.content.Context
+import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkInfo
 import android.net.Uri
 import android.os.Build
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.ktx.Firebase
@@ -15,9 +17,9 @@ import com.google.firebase.storage.UploadTask
 import com.google.firebase.storage.ktx.storage
 import java.io.File
 
-class SyncHandler(c: Context?, m: ArrayList<File>) {
+class SyncHandler(c: Context?, m: ArrayList<File>?) {
     var context: Context? = c
-    var mediaArray: ArrayList<File> = m
+    var mediaArray: ArrayList<File>? = m
     var storage = Firebase.storage
     var storageReference= storage.reference
 
@@ -48,7 +50,8 @@ class SyncHandler(c: Context?, m: ArrayList<File>) {
     }
 
     fun doSync() {
-        if (mediaArray.size == 0) {
+        if (mediaArray == null) return
+        if (mediaArray?.size == 0) {
             Toast.makeText(
                 context, "No Picture to upload now!", Toast.LENGTH_SHORT
             ).show()
@@ -63,11 +66,13 @@ class SyncHandler(c: Context?, m: ArrayList<File>) {
         var uploadTask: UploadTask? = null
         var i = 0
         // Defining the child of storageReference
-        while(i < mediaArray.size) {
-            if (mediaArray[i].absolutePath.endsWith("jpg")) {
-                uploadTask = storageReference.child("images/" + mediaArray[i].name).putFile(getUriFromFile(mediaArray[i])!!)
-            } else if (mediaArray[i].absolutePath.endsWith("mp4")) {
-                uploadTask = storageReference.child("movies/" + mediaArray[i].name).putFile(getUriFromFile(mediaArray[i])!!)
+        while(i < mediaArray!!.size) {
+            if (mediaArray!![i].absolutePath.endsWith("jpg")) {
+                uploadTask = storageReference.child("images/" + mediaArray!![i].name).
+                putFile(getUriFromFile(mediaArray!![i])!!)
+            } else if (mediaArray!![i].absolutePath.endsWith("mp4")) {
+                uploadTask = storageReference.child("movies/" + mediaArray!![i].name).
+                putFile(getUriFromFile(mediaArray!![i])!!)
             }
             uploadTask!!.addOnSuccessListener {
                 //// Image uploaded successfully, dismiss the dialog

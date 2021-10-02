@@ -2,7 +2,6 @@ package comp5216.sydney.edu.au.mediarecording
 
 import android.app.AlarmManager
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -27,6 +26,11 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
+import android.net.ConnectivityManager
+import android.content.IntentFilter
+import android.net.ConnectivityManager.NetworkCallback
+import android.net.NetworkCapabilities
+import android.net.Network
 
 class MainActivity : AppCompatActivity() {
     // Components
@@ -38,7 +42,6 @@ class MainActivity : AppCompatActivity() {
 
     // Arrays
     var imageByteArray = ArrayList<ByteArray>()
-    var mediaArray = ArrayList<File>()
 
     // Default media file name and Uri
     var imageFileName: String = "photo.jpg"
@@ -52,14 +55,14 @@ class MainActivity : AppCompatActivity() {
 
     // Alarm and Sync handle
     lateinit var syncHandler: SyncHandler
+    var networkChangeReceiver = NetworkChangeReceiver()
     var alarmManager: AlarmManager? = null
     var pendingIntent: PendingIntent? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        ins = this;
+        ins = this
 
         // Find mainView component
         gridView = findViewById<View?>(R.id.mainGridView) as GridView
@@ -67,11 +70,7 @@ class MainActivity : AppCompatActivity() {
         imageButton = findViewById(R.id.mainFabTakeImage)
         videoButton = findViewById(R.id.mainFabTakeVideo)
 
-        //val user = auth.currentUser
-        //if (user != null) {
-        //} else {
         signInAnonymously()
-        //}
 
         cameraMenuButton?.setOnClickListener {
             if (!isFABOpen) {
@@ -82,40 +81,43 @@ class MainActivity : AppCompatActivity() {
         }
 
         alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        updateAlarmManager(mediaArray)
+        val intent = Intent(this, SyncReceiver::class.java)
+        pendingIntent = PendingIntent.getBroadcast(
+            this,
+            SYNC_REQUEST_CODE,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = System.currentTimeMillis()
+        calendar.set(Calendar.HOUR_OF_DAY, 2)
+        calendar.set(Calendar.MINUTE, 0)
+
+        // Starts the alarm manager
+        alarmManager!!.setRepeating(
+            AlarmManager.RTC,
+            calendar.timeInMillis,
+            AlarmManager.INTERVAL_DAY,
+            pendingIntent
+        )
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val intentFilter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+        registerReceiver(networkChangeReceiver, intentFilter)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        unregisterReceiver(networkChangeReceiver)
     }
 
     override fun onDestroy() {
         super.onDestroy()
         // Cancels the pendingIntent if it is no longer needed after this activity is destroyed.
         alarmManager!!.cancel(pendingIntent)
-    }
-
-    fun updateAlarmManager(mediaArray: ArrayList<File>) {
-        alarmManager!!.cancel(pendingIntent)
-        if (mediaArray.size != 0) {
-            val intent = Intent(this, SyncReceiver::class.java)
-            intent.putExtra("mediaArray", mediaArray)
-            pendingIntent = PendingIntent.getBroadcast(
-                this,
-                SYNC_REQUEST_CODE,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT
-            )
-
-            val calendar = Calendar.getInstance()
-            calendar.timeInMillis = System.currentTimeMillis()
-            calendar.set(Calendar.HOUR_OF_DAY, 2)
-            calendar.set(Calendar.MINUTE, 0)
-
-            // Starts the alarm manager
-            alarmManager!!.setRepeating(
-                AlarmManager.RTC,
-                calendar.timeInMillis,
-                AlarmManager.INTERVAL_DAY,
-                pendingIntent
-            )
-        }
     }
 
     private fun signInAnonymously() {
@@ -159,8 +161,7 @@ class MainActivity : AppCompatActivity() {
 
             // Create a photo file and its reference
             val imageFile = getMediaFile("image")
-            mediaArray.add(imageFile)
-            updateAlarmManager(mediaArray)
+            Global.mediaArray.add(imageFile)
 
             imageUri = getUriFromFile(imageFile)
             // Add extended data to the intent
@@ -185,8 +186,8 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(MediaStore.ACTION_VIDEO_CAPTURE)
 
             val videoFile = getMediaFile("video")
-            mediaArray.add(videoFile)
-            updateAlarmManager(mediaArray)
+            Global.mediaArray.add(videoFile)
+
 
             videoUri = getUriFromFile(videoFile)
             // Add extended data to the intent
@@ -203,7 +204,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun onCloudSyncClick(view: View?) {
-        syncHandler = SyncHandler(this, mediaArray)
+        syncHandler = SyncHandler(this, Global.mediaArray)
         syncHandler.run()
     }
 
@@ -319,6 +320,7 @@ class MainActivity : AppCompatActivity() {
         private const val MY_PERMISSIONS_REQUEST_READ_PHOTOS: Int = 102
         private const val MY_PERMISSIONS_REQUEST_RECORD_VIDEO: Int = 103
         private const val MY_PERMISSIONS_REQUEST_READ_VIDEOS: Int = 104
+        private const val MEDIA_ARRAY_DATA_PASSED_ACTION: Int = 105
 
         var ins: MainActivity? = null
         fun getInstance(): MainActivity? {
