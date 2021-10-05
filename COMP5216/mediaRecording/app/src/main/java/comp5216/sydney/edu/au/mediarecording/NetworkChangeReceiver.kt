@@ -3,14 +3,12 @@ package comp5216.sydney.edu.au.mediarecording
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
-import android.widget.Toast
-import android.net.NetworkInfo
 import android.net.ConnectivityManager
+import android.net.NetworkInfo
+import android.util.Log
 import comp5216.sydney.edu.au.mediarecording.Global.Companion.mediaArray
-import java.io.File
 
-class NetworkChangeReceiver: BroadcastReceiver() {
+class NetworkChangeReceiver : BroadcastReceiver() {
     var onLine = true
     override fun onReceive(context: Context, intent: Intent) {
         val manager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager

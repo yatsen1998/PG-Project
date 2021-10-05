@@ -4,9 +4,11 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.ThumbnailUtils
+import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -26,11 +28,6 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
-import android.net.ConnectivityManager
-import android.content.IntentFilter
-import android.net.ConnectivityManager.NetworkCallback
-import android.net.NetworkCapabilities
-import android.net.Network
 
 class MainActivity : AppCompatActivity() {
     // Components
@@ -91,8 +88,8 @@ class MainActivity : AppCompatActivity() {
 
         val calendar = Calendar.getInstance()
         calendar.timeInMillis = System.currentTimeMillis()
-        calendar.set(Calendar.HOUR_OF_DAY, 2)
-        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.HOUR_OF_DAY, 12)
+        calendar.set(Calendar.MINUTE, 30)
 
         // Starts the alarm manager
         alarmManager!!.setRepeating(
@@ -118,6 +115,7 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         // Cancels the pendingIntent if it is no longer needed after this activity is destroyed.
         alarmManager!!.cancel(pendingIntent)
+        Global.mediaArray.clear()
     }
 
     private fun signInAnonymously() {
@@ -188,7 +186,6 @@ class MainActivity : AppCompatActivity() {
             val videoFile = getMediaFile("video")
             Global.mediaArray.add(videoFile)
 
-
             videoUri = getUriFromFile(videoFile)
             // Add extended data to the intent
             intent.putExtra(MediaStore.EXTRA_OUTPUT, videoUri)
@@ -222,7 +219,6 @@ class MainActivity : AppCompatActivity() {
         }
         return mediaUri
     }
-
 
     // Returns the Uri for a photo/media stored on disk given the fileName and type
     private fun getMediaFile(type: String): File {
