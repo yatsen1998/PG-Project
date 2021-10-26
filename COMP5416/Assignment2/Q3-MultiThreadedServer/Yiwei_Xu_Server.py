@@ -3,7 +3,9 @@ import uuid
 
 serverPort = 12010
 serverSocket = socket(AF_INET, SOCK_STREAM)
-serverSocket.bind(('', serverPort))
+Thread_count = 0
+
+serverSocket.bind(('127.0.0.1', serverPort))
 serverSocket.listen(5)
 
 print("Server Started...")
