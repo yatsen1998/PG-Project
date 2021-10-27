@@ -1,30 +1,42 @@
-from socket import *
+import socket
 import uuid
+from _thread import *
 
-serverPort = 12010
-serverSocket = socket(AF_INET, SOCK_STREAM)
-Thread_count = 0
+Server = socket.socket()
+host = '127.0.0.1'
+port = 12010
+ThreadCount = 0
+try:
+    Server.bind((host, port))
+except socket.error as e:
+    print(str(e))
 
-serverSocket.bind(('127.0.0.1', serverPort))
-serverSocket.listen(5)
+print("Server Started ...")
+Server.listen(5)
 
-print("Server Started...")
-print("Waiting for other connections")
 
-conn_socket, addr = serverSocket.accept()
-print("Connection established, receiving data...")
+def multi_threaded_client(connection):
+    f = open(str(uuid.uuid4()), 'wb')
+    while True:
+        data = connection.recv(2048)
+        if not data:
+            break
+        f.write(data)
+        if len(data) == 0:
+            break
+    f.close()
+    print("All data received, Connection closed\n")
+    connection.close()
 
-f = open(str(uuid.uuid4()), 'wb')
-l = conn_socket.recv(1024)
+
 
 while True:
-    f.write(l)
-    l = conn_socket.recv(1024)
-    if (len(l)==0):
-        break
+    print("Waiting for other connection ...")
+    Client, address = Server.accept()
+    #print('Connected to: ' + address[0] + ':' + str(address[1]))
+    print("Connection established, receiving data...\n")
+    start_new_thread(multi_threaded_client, (Client,))
+    ThreadCount += 1
+    #print('Thread Number: ' + str(ThreadCount))
 
-f.close()
-
-print("All data received, Connection lost")
-
-conn_socket.close()
+Server.close()
