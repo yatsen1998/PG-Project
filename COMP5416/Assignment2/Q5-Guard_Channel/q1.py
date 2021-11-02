@@ -2,13 +2,13 @@ import math
 
 
 def get_numerator(i):
-    result = math.pow(50, i) / math.factorial(i)
+    result = math.pow(50, 55) * math.pow(10, i - 55) / math.factorial(i)
     return result
 
 
 def get_denominator():
     n = 0
-    result = 0
+    result = 0.0
     while n <= 55:
         #print(n)
         result += math.pow(50, n) / math.factorial(n)
@@ -29,13 +29,13 @@ def getEachProbability(i):
     return numerator / denominator
 
 
-i = 56
+i = 55
 probability = []
 sum = 0
 while i <= 60:
     sum += getEachProbability(i)
     probability.append(getEachProbability(i))
-    print("%f" % getEachProbability(i))
+    print("%.8E" % getEachProbability(i))
     i += 1
 
 print(sum)
