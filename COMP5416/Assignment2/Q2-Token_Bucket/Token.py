@@ -1,13 +1,8 @@
 import numpy as np
 
-Capacity = 4
-
-class TokenBucket:
-    def __init__(self, arrival_rate, capacity)
-
-T = 20
-arate = 3
-drate = 4
+T = 20000
+arate = 1
+drate = 1.25
 
 t = 0
 arrival = []
@@ -16,14 +11,13 @@ while t < T:
     arrival.append(t)
 
 t = 0
-N = 0
+N = -5
 departure = []
 recording = []
 
 while (t < T and len(arrival) > 0):
 
     if len(departure) == 0:
-
         told = t
         t = arrival[0]
         del arrival[0]
@@ -38,9 +32,8 @@ while (t < T and len(arrival) > 0):
             t = departure[0]
             del departure[0]
             recording.append([told, t, N])
-
             N = N - 1
-            if N >= 1:
+            if N >= -4:
                 de = t + np.random.exponential(1.0 / drate)
                 departure.append(de)
                 departure.sort()
@@ -73,10 +66,5 @@ sumtime = sum(distribution)
 pdf = [x / sumtime for x in distribution]
 print(pdf)
 
-for i in range(0, len(recording)):
-    print(recording[i])
-
-
-
-
-
+# for i in range(0, len(recording)):
+#    print recording[i]
