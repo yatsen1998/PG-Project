@@ -1,7 +1,7 @@
 import numpy as np
 import math
 
-T = 10000
+T = 2000
 arrival_rate = 1
 departure_rate = 1.25
 r = 1 / departure_rate
@@ -26,16 +26,16 @@ while t < T and len(arrival) > 0:
     if Tokens < 4:
         Tokens += 1
         if Tokens > 4:
+            print("A token is dropped")
             Tokens = 4
 
     while Tokens > 0 and len(arrival) > 0:
 
         if len(departure) == 0:
-
             told = t
             t = arrival[0]
             del arrival[0]
-            de = t + np.random.exponential(1.0 / departure_rate)
+            de = t + (1.0 / departure_rate)
             departure.append(de)
             Tokens = Tokens - 1
             recording.append([told, t, N, - Tokens])
@@ -54,7 +54,7 @@ while t < T and len(arrival) > 0:
 
                 N = N - 1
                 if N >= 1:
-                    de = t + np.random.exponential(1.0 / departure_rate)
+                    de = t + (1.0 / departure_rate)
                     departure.append(de)
                     departure.sort()
 
