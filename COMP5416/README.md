@@ -1,5 +1,5 @@
 # COMP5416 - Advanced Network Technologies
-The codes of this course are basically simulation and Math problems. Some of the answers are not solved.
+The codes of this course are basically simulation and Math problems. Some of the answers are not right.
 ## Language
 MacOS 11.0.1  
 Python 3.8  
