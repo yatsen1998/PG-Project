@@ -5,5 +5,5 @@ Courses with codes are stored here and detailed information can be found in each
 | Unit     | Name | Description |
 | ----------- | ----------- | ----------- |
 | COMP5216      | Mobile Computing | 2 Assignments and 1 Project |
-| COMP5416   | Advanced Network Technology | Code questions in 2 Assignments|
-| ELEC5516  | Software Defined Networks | Project2 Task1 |
+| COMP5416   | Advanced Network Technology | All coding Labs and Coding questions in 2 Assignments|
+| ELEC5516  | Software Defined Networks | 2 Projects |
