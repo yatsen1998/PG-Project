@@ -16,7 +16,7 @@ Marks: 15 / 15
 This is a group project and I only finish task1.
 | Name| Description|
 |---|---|
-| Task1 | 2 level Tree Topoloigy with Isolation |
+| Task1 | 2 level Tree Topology with Isolation |
 | Task3 | ONOS Rest API |
 | Task4 | P4 Language Programming |
 
