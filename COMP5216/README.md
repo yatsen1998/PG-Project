@@ -1,4 +1,22 @@
 # COMP5216 - Mobile Computing
+- [COMP5216 - Mobile Computing](#comp5216---mobile-computing)
+  - [Environment](#environment)
+  - [Project 1 - Reminder](#project-1---reminder)
+    - [Description](#description)
+    - [Assessment](#assessment)
+    - [Techniques](#techniques)
+    - [Marks](#marks)
+  - [Project 2 - MediaRecoding](#project-2---mediarecoding)
+    - [Description](#description-1)
+    - [Assessment](#assessment-1)
+    - [Techniques](#techniques-1)
+    - [Marks](#marks-1)
+  - [Final Project - FindMyGym](#final-project---findmygym)
+    - [Description](#description-2)
+    - [Assessment](#assessment-2)
+    - [Techniques](#techniques-2)
+    - [Marks (Including reports)](#marks-including-reports)
+
 ## Environment
 MacOS BigSur
 Android Studio 2020.3.1
@@ -13,7 +31,6 @@ Database - Room
 ### Marks
 4.65 / 5
 
----
 ## Project 2 - MediaRecoding
 ### Description
 MediaRecording applications using Kotlin for COMP5216 Assignment2.  
@@ -26,8 +43,6 @@ Assessment here: [COMP5216-Assignment2](Documents/Assignment%202.pdf)
 - Cloud Sync Strategies
 ### Marks
 4.85 / 5
-
----
 
 ## Final Project - FindMyGym
 ### Description
