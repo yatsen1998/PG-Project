@@ -1,5 +1,5 @@
 # PG-Project
-UoS Master of Information Technology Projects  
+USYD Master of Information Technology Projects  
 Courses with codes are stored here and detailed information can be found in each directory.  
 要写代码的课程将会被存储在该仓库。详细信息在各个一级子目录。
 | Unit     | Name | Description |
