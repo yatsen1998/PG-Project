@@ -7,15 +7,17 @@ This course involves Linux works and many Mininet Settings. As mininet provides 
 | Project1 | [ELEC5517-Project1](Documents/ELEC5517%20Project%201.pdf) |
 | Project2 | [ELEC5517-Project2](Documents/ELEC5517%20Project%202.pdf) |
 
-Marks: 15 / 15
+
 ## Project1 
 Simple 3-level Tree Topology and some wireshark works.
+Marks: 15 / 15
+
 ## Project2
 This is a group project and I only finish task1.
 | Name| Description|
 |---|---|
-| Task1 | 2 level Tree Topoloigy with Isolation |
+| Task1 | 2 level Tree Topology with Isolation |
 | Task3 | ONOS Rest API |
 | Task4 | P4 Language Programming |
 
-Marks: ? / 25
+Marks: 23 / 25
