@@ -67,83 +67,45 @@ def myNetwork():
     h20 = net.addHost('h20', cls=Host, ip='10.0.0.20', defaultRoute=None)
 
     info( '*** Add links\n')
-    s1s2 = {'delay':'20ms'}
-    net.addLink(s1, s2, cls=TCLink , **s1s2)
-    s2s5 = {'delay':'10ms'}
-    net.addLink(s2, s5, cls=TCLink , **s2s5)
-    s2s6 = {'delay':'10ms'}
-    net.addLink(s2, s6, cls=TCLink , **s2s6)
-    s2s7 = {'delay':'10ms'}
-    net.addLink(s2, s7, cls=TCLink , **s2s7)
-    s5h1 = {'delay':'10ms'}
-    net.addLink(s5, h1, cls=TCLink , **s5h1)
-    s5h2 = {'delay':'10ms'}
-    net.addLink(s5, h2, cls=TCLink , **s5h2)
-    s5h3 = {'delay':'10ms'}
-    net.addLink(s5, h3, cls=TCLink , **s5h3)
-    s6h4 = {'delay':'10ms'}
-    net.addLink(s6, h4, cls=TCLink , **s6h4)
-    s6h5 = {'delay':'10ms'}
-    net.addLink(s6, h5, cls=TCLink , **s6h5)
-    s6h6 = {'delay':'10ms'}
-    net.addLink(s6, h6, cls=TCLink , **s6h6)
-    s7h7 = {'delay':'10ms'}
-    net.addLink(s7, h7, cls=TCLink , **s7h7)
-    s7h8 = {'delay':'10ms'}
-    net.addLink(s7, h8, cls=TCLink , **s7h8)
-    s7h9 = {'delay':'10ms'}
-    net.addLink(s7, h9, cls=TCLink , **s7h9)
-    s1s3 = {'delay':'20ms'}
-    net.addLink(s1, s3, cls=TCLink , **s1s3)
-    s3s8 = {'delay':'10ms'}
-    net.addLink(s3, s8, cls=TCLink , **s3s8)
-    s3s9 = {'delay':'10ms'}
-    net.addLink(s3, s9, cls=TCLink , **s3s9)
-    s3s10 = {'delay':'10ms'}
-    net.addLink(s3, s10, cls=TCLink , **s3s10)
-    s1s4 = {'delay':'20ms'}
-    net.addLink(s1, s4, cls=TCLink , **s1s4)
-    s4s11 = {'delay':'10ms'}
-    net.addLink(s4, s11, cls=TCLink , **s4s11)
-    s4s12 = {'delay':'10ms'}
-    net.addLink(s4, s12, cls=TCLink , **s4s12)
-    s4s13 = {'delay':'10ms'}
-    net.addLink(s4, s13, cls=TCLink , **s4s13)
-    net.addLink(s8, h10)
-    s8h11 = {'delay':'10ms'}
-    net.addLink(s8, h11, cls=TCLink , **s8h11)
-    s8h12 = {'delay':'10ms'}
-    net.addLink(s8, h12, cls=TCLink , **s8h12)
-    s9h13 = {'delay':'10ms'}
-    net.addLink(s9, h13, cls=TCLink , **s9h13)
-    s9h14 = {'delay':'10ms'}
-    net.addLink(s9, h14, cls=TCLink , **s9h14)
-    s9h15 = {'delay':'10ms'}
-    net.addLink(s9, h15, cls=TCLink , **s9h15)
-    s10h16 = {'delay':'10ms'}
-    net.addLink(s10, h16, cls=TCLink , **s10h16)
-    s10h17 = {'delay':'10ms'}
-    net.addLink(s10, h17, cls=TCLink , **s10h17)
-    s10h18 = {'delay':'10ms'}
-    net.addLink(s10, h18, cls=TCLink , **s10h18)
-    s11h19 = {'delay':'10ms'}
-    net.addLink(s11, h19, cls=TCLink , **s11h19)
-    s11h20 = {'delay':'10ms'}
-    net.addLink(s11, h20, cls=TCLink , **s11h20)
-    s11h21 = {'delay':'10ms'}
-    net.addLink(s11, h21, cls=TCLink , **s11h21)
-    s12h22 = {'delay':'10ms'}
-    net.addLink(s12, h22, cls=TCLink , **s12h22)
-    s12h23 = {'delay':'10ms'}
-    net.addLink(s12, h23, cls=TCLink , **s12h23)
-    s12h24 = {'delay':'10ms'}
-    net.addLink(s12, h24, cls=TCLink , **s12h24)
-    s13h25 = {'delay':'10ms'}
-    net.addLink(s13, h25, cls=TCLink , **s13h25)
-    s13h26 = {'delay':'10ms'}
-    net.addLink(s13, h26, cls=TCLink , **s13h26)
-    s13h27 = {'delay':'10ms'}
-    net.addLink(s13, h27, cls=TCLink , **s13h27)
+    net.addLink(s1, s2, cls=TCLink , bandwidth=5, delay='20ms')
+    net.addLink(s2, s5, cls=TCLink , bandwidth=5, delay='20ms')
+    net.addLink(s2, s6, cls=TCLink , bandwidth=5, delay='20ms')
+    net.addLink(s2, s7, cls=TCLink , bandwidth=5, delay='20ms')
+    net.addLink(s5, h1, cls=TCLink , delay='10ms')
+    net.addLink(s5, h2, cls=TCLink , delay='10ms')
+    net.addLink(s5, h3, cls=TCLink , delay='10ms')
+    net.addLink(s6, h4, cls=TCLink , delay='10ms')
+    net.addLink(s6, h5, cls=TCLink , delay='10ms')
+    net.addLink(s6, h6, cls=TCLink , delay='10ms')
+    net.addLink(s7, h7, cls=TCLink , delay='10ms')
+    net.addLink(s7, h8, cls=TCLink , delay='10ms')
+    net.addLink(s7, h9, cls=TCLink , delay='10ms')
+    net.addLink(s1, s3, cls=TCLink , bandwidth=5, delay='20ms')
+    net.addLink(s3, s8, cls=TCLink , bandwidth=5, delay='20ms')
+    net.addLink(s3, s9, cls=TCLink , bandwidth=5, delay='20ms')
+    net.addLink(s3, s10, cls=TCLink , bandwidth=5, delay='20ms')
+    net.addLink(s1, s4, cls=TCLink , bandwidth=5, delay='20ms')
+    net.addLink(s4, s11, cls=TCLink , bandwidth=5, delay='20ms')
+    net.addLink(s4, s12, cls=TCLink , bandwidth=5, delay='20ms')
+    net.addLink(s4, s13, cls=TCLink , bandwidth=5, delay='20ms')
+    net.addLink(s8, h10, cls=TCLink , delay='10ms')
+    net.addLink(s8, h11, cls=TCLink , delay='10ms')
+    net.addLink(s8, h12, cls=TCLink , delay='10ms')
+    net.addLink(s9, h13, cls=TCLink , delay='10ms')
+    net.addLink(s9, h14, cls=TCLink , delay='10ms')
+    net.addLink(s9, h15, cls=TCLink , delay='10ms')
+    net.addLink(s10, h16, cls=TCLink , delay='10ms')
+    net.addLink(s10, h17, cls=TCLink , delay='10ms')
+    net.addLink(s10, h18, cls=TCLink , delay='10ms')
+    net.addLink(s11, h19, cls=TCLink , delay='10ms')
+    net.addLink(s11, h20, cls=TCLink , delay='10ms')
+    net.addLink(s11, h21, cls=TCLink , delay='10ms')
+    net.addLink(s12, h22, cls=TCLink , delay='10ms')
+    net.addLink(s12, h23, cls=TCLink , delay='10ms')
+    net.addLink(s12, h24, cls=TCLink , delay='10ms')
+    net.addLink(s13, h25, cls=TCLink , delay='10ms')
+    net.addLink(s13, h26, cls=TCLink , delay='10ms')
+    net.addLink(s13, h27, cls=TCLink , delay='10ms')
 
     info( '*** Starting network\n')
     net.build()
