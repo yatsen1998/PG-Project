@@ -8,11 +8,9 @@ Using Matrix Multiplication problem to test the following methods, See Week3 PPT
 
 ## Environment & Test sample
 
-1. Environment: 
+1. Environment: MacOS 12.2.1 - VScode - Intel i5/4Core/2GHz- 16GB Mem
 
-- MacOS 12.2.1 - VScode - Intel i5 4 Core 2GHz- 16GB Mem
-
-2. Sample: using fixed matrix (1024 * 1024) to multiply.
+2. Sample: using fixed-size matrix (1024 * 1024) to multiply.
 
 ## Results
 
