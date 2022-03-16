@@ -2,13 +2,15 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-#define N1 1024
-#define N2 1024
-#define M 1024
+#define UNROLLING_FACTOR 4
 struct timeval start_time, end_time;
 
-int main()
+int main(int argc, char* argv[])
 {
+    int N1 = atoi(argv[1]);
+    int N2 = atoi(argv[2]);
+    int M = atoi(argv[3]);
+    int rem = 0;
     double sum = 0;
     double *A0;
     double *B0;
@@ -47,19 +49,35 @@ int main()
     }
 
     gettimeofday(&start_time, 0);
+
+    if (M % UNROLLING_FACTOR != 0) {
+        rem = M % UNROLLING_FACTOR;
+    }
+
     for (int i = 0; i < N1; ++i) {
         for (int j = 0; j < N2; ++j) {
             sum = 0;
-            for (int z = 0; z < M; z+=4) {
-                sum = matrixA[i][z] * matrixB[z][j];
-                sum = sum + matrixA[i][z + 1] * matrixB[z + 1][j];
-                sum = sum + matrixA[i][z + 2] * matrixB[z + 2][j];
-                sum = sum + matrixA[i][z + 3] * matrixB[z + 3][j];
+            for (int z = 0; z < M - rem; z += UNROLLING_FACTOR) {
+                sum = matrixA[i][z] * matrixB[z][j]
+                    + matrixA[i][z + 1] * matrixB[z + 1][j]
+                    + matrixA[i][z + 2] * matrixB[z + 2][j]
+                    + matrixA[i][z + 3] * matrixB[z + 3][j];
+            }
+
+            for (int z = M - rem; z < M; z++) {
+                sum += matrixA[i][z] * matrixB[z][j];
             }
             matrixC[i][j] = sum;
         }
     }    
     gettimeofday(&end_time, 0);
+
+    for (int i = 0; i < N1; ++i) {
+        for (int j = 0; j < N2; ++j) {
+            printf("%2lf ", matrixC[i][j]);
+        }
+        printf("\n");
+    }
 
     long seconds = end_time.tv_sec - start_time.tv_sec;
     long microseconds = end_time.tv_usec - start_time.tv_usec;

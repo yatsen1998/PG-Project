@@ -57,8 +57,8 @@ int main()
                             matrixC[ii + i][jj + j] += matrixA[ii + i][zz + z] * matrixB[zz + z][jj + j];
                         }
                     }
-
                 }
+                
             }
         }
     }
