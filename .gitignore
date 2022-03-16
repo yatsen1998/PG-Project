@@ -5,4 +5,4 @@
 *.iws
 
 .DS_Store
-.vscode/
+.vscode/*
