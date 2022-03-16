@@ -5,5 +5,4 @@
 *.iws
 
 .DS_Store
-*/cmake-build-debug/*
-COMP5426/Assignment1/cmake-build-debug/*
+.vscode/
