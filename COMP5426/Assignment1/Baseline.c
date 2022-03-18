@@ -1,4 +1,8 @@
-// Assignment1 for COMP5426
+/*
+    Assignment1 for COMP5426
+    Baseline with Pthread
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -16,7 +20,6 @@ struct timeval start_time, end_time;
 void* pthread_baseline(void* threadId)
 {
     int count = 0;
-    double sum = 0;
     int* id;
 
     id = (int*) threadId;
@@ -25,22 +28,17 @@ void* pthread_baseline(void* threadId)
         for (int j = i; j < N; j++) {
             if(count >= workload * (*id) && count < workload * ((*id) + 1)) {
                 //printf("%d count: %d\n", (*id), count);
-                sum = 0;
                 for (int z = 0; z < M; z++) {
-                    sum += sequences[i][z] * sequences[j][z];
+                    result[count] += sequences[i][z] * sequences[j][z];
                 }
-                result[count] = sum;
-                count++;
-                printf("%d, result[%d]: %2lf\n", (*id), count, sum);
-            } else {
-                count++;
-                continue;
+                //printf("%d, result[%d]: %2lf\n", (*id), count, sum);
             }
+            count++;
 
         }
     }
 
-    pthread_exit(NULL);
+    return NULL;
 }
 
 int main(int argc, char* argv[])
@@ -49,7 +47,6 @@ int main(int argc, char* argv[])
     M = atoi(argv[2]);
     T = atoi(argv[3]);
     int num_threads = T;
-    int remain_seq = 0;
 
     /* Allocate result array. */
     int result_size = N * (N + 1) / 2;
@@ -69,7 +66,7 @@ int main(int argc, char* argv[])
         }
     }
     
-    /* Generate threads */
+    /* Baseline pthread implementation */
     int ret = 0;
     workload = (int)((double)result_size / T + 0.5);
     int tids[num_threads];
@@ -86,7 +83,10 @@ int main(int argc, char* argv[])
             printf("Pthread Create Failed.\n");
             exit(-1);
         }
-        // As the threads are calcultating at almost the same time, we need to lock the sum to make sure there are no conflict.
+    }
+
+    for (int i = 0; i < num_threads; i++) {
+        pthread_join(threads[i], NULL);
     }
 
     gettimeofday(&end_time, 0);
@@ -94,14 +94,11 @@ int main(int argc, char* argv[])
     long microseconds = end_time.tv_usec - start_time.tv_usec;
     double elapsed = seconds + 1e-6 * microseconds;
 
-    printf("It took %f seconds to complete.\n\n", elapsed);
+    printf("Baseline Pthread method took %2f seconds to complete.\n\n", elapsed);
 
-    pthread_exit(NULL);
     // for (int i = 0; i < result_size; i++) {
     //     printf("%2lf ", result[i]);
     // }
-
-    /* Deal with remain sequences. */
 
     free(sequence);
     free(sequences);
