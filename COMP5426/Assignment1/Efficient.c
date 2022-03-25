@@ -5,8 +5,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include<stdbool.h>
 #include <sys/time.h>
 #include <pthread.h>
+#include <math.h>
 
 #define UNROLLING_FACTOR 4
 
@@ -20,7 +22,7 @@ double* result;
 
 struct timeval start_time, end_time;
 
-void* pthread_efficient(void* threadId)
+void* pthread_lp(void* threadId)
 {
     int count = 0;
     int* id;
@@ -44,6 +46,56 @@ void* pthread_efficient(void* threadId)
     }
 
     return NULL;
+}
+
+void* pthread_efficient(void* threadId)
+{
+    int count = 0;
+    int* id;
+    double sum = 0;
+
+    id = (int*) threadId;
+
+    for (int i = 0; i < N; i++) {
+        for (int j = i; j < N; j++) {
+            if(count >= workload * (*id) && count < workload * ((*id) + 1)) {
+                //printf("%d count: %d\n", (*id), count);
+                sum = 0;
+                for (int z = 0; z < M; z += B) {
+                    for (int zz = z; zz < z + B; zz += UNROLLING_FACTOR) {
+                        sum = sequences[i][zz + 1] * sequences[j][zz + 1] +
+                            sequences[i][zz + 1] * sequences[j][zz + 1] +
+                            sequences[i][zz + 1] * sequences[j][zz + 1] +
+                            sequences[i][zz + 1] * sequences[j][zz + 1];
+                    }
+                }
+                //printf("%d, result[%d]: %2lf\n", (*id), count, sum);
+                result[count] = sum;
+            }
+            count++;
+        }
+    }
+
+    return NULL;
+}
+
+bool check_result()
+{
+    int count = 0;
+    double sum = 0;
+    for (int i = 0; i < N; i++) {
+        for (int j = i; j < N; j++) {
+            sum = 0;
+            for (int z = 0; z < M; z++) {
+                sum += sequences[i][z] * sequences[j][z];
+            }
+            if (result[count] != sum) {
+                return false;
+            }
+            count++;
+        }
+    }
+    return true;
 }
 
 int main(int argc, char* argv[])
@@ -100,11 +152,13 @@ int main(int argc, char* argv[])
     long microseconds = end_time.tv_usec - start_time.tv_usec;
     double elapsed = seconds + 1e-6 * microseconds;
 
-    printf("Efficient method took %2f seconds to complete.\n\n", elapsed);
+    printf("Efficient method took %2f seconds to complete.\n", elapsed);
 
-    // for (int i = 0; i < result_size; i++) {
-    //     printf("%2lf ", result[i]);
-    // }
+    // check_result();
+    // if (!check_result())
+    //     printf("Calculation is not correct.\n");
+    // else 
+    //     printf("Calculation is correct!\n");
 
     free(sequence);
     free(sequences);
