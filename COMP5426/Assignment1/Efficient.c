@@ -12,6 +12,7 @@
 
 #define min(a,b) ( ((a)>(b)) ? (b):(a) )
 #define MAX_NUM 0x3f3f3f3f
+#define UNROLLING_FACTOR 4
 
 pthread_mutex_t global_M_lock;
 
@@ -91,9 +92,12 @@ void computeMatrix(int i, int j)
         At[i] = At0 + i * colSize;
     }
 
-    for (int i = 0; i < M; ++i) {
-        for (int j = 0; j < colSize; ++j) {
-            At[i][j] = Aj[j][i];
+    for (int x = 0; x < M; ++x) {
+        for (int y = 0; y < colSize; y += UNROLLING_FACTOR) {
+            At[x][y] = Aj[y][x];
+            At[x][y + 1] = Aj[y + 1][x];
+            At[x][y + 2] = Aj[y + 2][x];
+            At[x][y + 3] = Aj[y + 3][x];
         }
     }
 
@@ -105,18 +109,25 @@ void computeMatrix(int i, int j)
     // }
 
     //printf("rowSize:%d, colSize:%d, M:%d\n", rowSize, colSize, M);
-    double res = 0;
+
+    double res1 = 0, res2 = 0, res3 = 0, res4 = 0;
     for (int x = 0; x < rowSize; ++x) {
         for (int y = 0; y < colSize; ++y) {
             int realX = x + i * B;
             int realY = y + j * B;
-            if (realY < realX) continue;
-            for (int z = 0; z < M; ++z) {
-                res += A[x][z] * At[z][y];
-            }
+            res1 = 0;
+            res2 = 0;
+            res3 = 0;
+            res4 = 0;
             int k = R[realX] + realY - realX;
-            V[k] = res;
-            res = 0;
+            if (realY < realX) continue;
+            for (int z = 0; z < M; z += UNROLLING_FACTOR) {
+                res1 = A[x][z] * At[z][y];
+                res2 = A[x][z + 1] * At[z + 1][y];
+                res3 = A[x][z + 2] * At[z + 2][y];
+                res4 = A[x][z + 3] * At[z + 3][y];
+                V[k] += res1 + res2 + res3 + res4;
+            }
         }
     }
 
@@ -133,13 +144,11 @@ void* pthread_efficient(void* threadId)
     int* id = (int*) threadId;
     struct block curBlock;
 
-    pthread_mutex_lock(&global_M_lock);
     for (int i = 0; tasks[(*id)][i] != MAX_NUM && i < max_task_size; ++i) {
         curBlock = blocks[tasks[(*id)][i]];
         //printf("Calculating Block:%d A%d A%d...\n", tasks[(*id)][i], curBlock.i, curBlock.j);
         computeMatrix(curBlock.i, curBlock.j);
     }
-    pthread_mutex_unlock(&global_M_lock);
 
     return NULL;
 }
@@ -154,7 +163,7 @@ bool check_result()
             for (int z = 0; z < M; z++) {
                 sum += sequences[i][z] * sequences[j][z];
             }
-            if (V[count] != sum) {
+            if (fabs(V[count] - sum) > 0.000001) {
                 printf("count:%d V[count]:%lf sum:%lf\n", count, V[count], sum);
                 return false;
             }
@@ -184,7 +193,7 @@ int main(int argc, char* argv[])
     }
 
     /* Generate Sequence matrix randomly. */
-    double* sequence;
+    double* sequence; 
     sequence = (double*) malloc(N * M * sizeof(double));
     sequences = (double**) malloc(N * sizeof(double*));
     for (int i = 0; i < N; ++i) {
@@ -229,7 +238,7 @@ int main(int argc, char* argv[])
     
     printf("\nAssigning tasks...\n");
     // Allocating taskList
-    max_task_size = blockNum / T + 1;
+    max_task_size = blockNum;
     int* task = (int*) malloc(num_threads * max_task_size * sizeof(int));
     tasks = (int**) malloc(num_threads * sizeof(task));
     for (int i = 0; i < num_threads; ++i) {
