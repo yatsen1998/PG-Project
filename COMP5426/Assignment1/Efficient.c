@@ -13,6 +13,9 @@
 #define min(a,b) ( ((a)>(b)) ? (b):(a) )
 #define MAX_NUM 0x3f3f3f3f
 
+pthread_mutex_t global_M_lock;
+pthread_spinlock_t;
+
 int N;
 int M;
 int T;
@@ -35,6 +38,7 @@ struct block* blocks;
 
 int** tasks;
 int* workloads;
+int max_task_size;
 
 int getMinFromNThread(int size) 
 {
@@ -87,47 +91,44 @@ void computeMatrix(int i, int j)
         A[x] = sequences[i * B + x];
     }
 
-    for (int x = 0; x < rowSize; x++) {
-        for (int y = 0; y < M; y++) {
-            printf("%lf ", A[x][y]);
-        }
-        printf("\n");
-    }
-
     double* At0 = (double*)malloc(colSize * M * sizeof(double));
     double** At = (double**)malloc(colSize * sizeof(double*));
     for (int x = 0; x < colSize; x++){
         At[x] = At0 + x * M;
     }
-
     for (int x = 0; x < rowSize; x++) {
         At[x] = sequences[j * B + x];
     }
-
-    printf("Calculating Transposition Matrix...\n");
+    //printf("Calculating Transposition Matrix...\n");
     At = transpose(At, colSize, M);
 
-    for (int x = 0; x < M; x++) {
-        for (int y = 0; y < colSize; y++) {
-            printf("%lf ", At[x][y]);
-        }
-        printf("\n");
-    }
-    return;
-
-    // res_seq = (double*) malloc(N1 * N2 * sizeof(double));
-    // resMat = (double**) malloc (N1 * sizeof(double*));
-    // for (int i = 0; i < N1; ++i) {
-    //     resMat[i] = res_seq + i * N2;
-    // }
-
-    // for (int x = i * B; x < rowSize; ++x) {
-    //     for (int y = j * B; y < colSize; ++y) {
-    //         for (int z = 0; z < M; ++z) {
-    //             res += A[x][z] * At[z][y];
-    //         }
+    // for (int x = 0; x < M; x++) {
+    //     for (int y = 0; y < colSize; y++) {
+    //         printf("%lf ", At[x][y]);
     //     }
+    //     printf("\n");
     // }
+
+    //printf("rowSize:%d, colSize:%d, M:%d\n", rowSize, colSize, M);
+    double res = 0;
+    for (int x = 0; x < rowSize; ++x) {
+        for (int y = 0; y < colSize; ++y) {
+            int realX = x + i * B;
+            int realY = y + j * B;
+            if (realY < realX) continue;
+            for (int z = 0; z < M; ++z) {
+                res += A[x][z] * At[z][y];
+            }
+            int k = R[realX] + realY - realX;
+            V[k] = res;
+            res = 0;
+        }
+    }
+
+    free(A0);
+    free(A);
+    free(At0);
+    free(At);
 }
 
 void* pthread_efficient(void* threadId)
@@ -135,12 +136,13 @@ void* pthread_efficient(void* threadId)
     int* id = (int*) threadId;
     struct block curBlock;
 
-    for (int i = 0; tasks[(*id)][i] != MAX_NUM; ++i) {
+    pthread_mutex_lock(&global_M_lock);
+    for (int i = 0; tasks[(*id)][i] != MAX_NUM && i < max_task_size; ++i) {
         curBlock = blocks[tasks[(*id)][i]];
-        printf("Calculating Block:%d A%d A%d...\n", tasks[(*id)][i], curBlock.i, curBlock.j);
+        //printf("Calculating Block:%d A%d A%d...\n", tasks[(*id)][i], curBlock.i, curBlock.j);
         computeMatrix(curBlock.i, curBlock.j);
     }
-
+    pthread_mutex_unlock(&global_M_lock);
 
     return NULL;
 }
@@ -195,7 +197,9 @@ int main(int argc, char* argv[])
     for (int i = 0; i < N; ++i) {
         for (int j = 0; j < M; ++j) {
             sequences[i][j] = (double) rand() / RAND_MAX;
+            //printf("%lf ", sequences[i][j]);
         }
+        //printf("\n");
     }
 
     /* Efficient pthread implementation */
@@ -228,7 +232,7 @@ int main(int argc, char* argv[])
     
     printf("\nAssigning tasks...\n");
     // Allocating taskList
-    int max_task_size = blockNum / T + 1;
+    max_task_size = blockNum / T + 1;
     int* task = (int*) malloc(num_threads * max_task_size * sizeof(int));
     tasks = (int**) malloc(num_threads * sizeof(task));
     for (int i = 0; i < num_threads; ++i) {
@@ -256,18 +260,19 @@ int main(int argc, char* argv[])
         workloads[toAssignThread] += blocks[i].weight;
     }
 
-    for (int i = 0; i < num_threads; ++i) {
-        printf("thread: %d task: ", i);
-        for (int j = 0; j < max_task_size; ++j) {
-            if (tasks[i][j] == MAX_NUM) continue;
-            printf("%d ",tasks[i][j]);
-        }
-        printf("\n");
-    }
+    // for (int i = 0; i < num_threads; ++i) {
+    //     printf("thread: %d task: ", i);
+    //     for (int j = 0; j < max_task_size; ++j) {
+    //         if (tasks[i][j] == MAX_NUM) continue;
+    //         printf("%d ",tasks[i][j]);
+    //     }
+    //     printf("total_workload:%d\n", workloads[i]);
+    // }
 
     int rc = 0;
     int tids[num_threads];
     pthread_t threads[num_threads];
+    pthread_mutex_init(&global_M_lock, NULL);
 
     gettimeofday(&start_time, 0);
 
@@ -289,7 +294,7 @@ int main(int argc, char* argv[])
     long microseconds = end_time.tv_usec - start_time.tv_usec;
     double elapsed = seconds + 1e-6 * microseconds;
 
-    printf("Baseline Pthread method took %2f seconds to complete.\n\n", elapsed);
+    printf("Efficient Pthread method took %lf seconds to complete.\n\n", elapsed);
 
     // for (int i = 0; i < result_size; i++) {
     //     printf("%2lf ", result[i]);
@@ -308,6 +313,9 @@ int main(int argc, char* argv[])
     free(workloads);
     free(sequence);
     free(sequences);
+    free(blocks);
+    free(block_R);
+    free(R);
     free(V);
 
     return 0;
