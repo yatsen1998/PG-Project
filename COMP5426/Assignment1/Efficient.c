@@ -70,9 +70,6 @@ void computeMatrix(int i, int j)
     double** A = (double**)malloc(rowSize * sizeof(double*));
     for (int x = 0; x < rowSize; x++){
         A[x] = A0 + x * M;
-    }
-
-    for (int x = 0; x < rowSize; x++) {
         A[x] = sequences[i * B + x];
     }
 
@@ -80,20 +77,14 @@ void computeMatrix(int i, int j)
     double** Aj = (double**)malloc(colSize * sizeof(double*));
     for (int x = 0; x < colSize; x++){
         Aj[x] = Aj0 + x * M;
-    }
-
-    for (int x = 0; x < rowSize; x++) {
         Aj[x] = sequences[j * B + x];
     }
     //printf("Calculating Transposition Matrix...\n");
 
     double* At0 = (double*)malloc(M * colSize * sizeof(double));
     double** At = (double**)malloc(M * sizeof(double*));
-    for (int i = 0; i < M; ++i) {
-        At[i] = At0 + i * colSize;
-    }
-
     for (int x = 0; x < M; ++x) {
+        At[x] = At0 + x * colSize;
         for (int y = 0; y < colSize; y += UNROLLING_FACTOR) {
             At[x][y] = Aj[y][x];
             At[x][y + 1] = Aj[y + 1][x];
