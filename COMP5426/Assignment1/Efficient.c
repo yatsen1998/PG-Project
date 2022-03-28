@@ -15,6 +15,7 @@
 #define UNROLLING_FACTOR 4
 
 pthread_mutex_t global_M_lock;
+pthread_mutex_t lock1;
 
 int N;
 int M;
