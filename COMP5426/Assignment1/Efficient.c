@@ -14,7 +14,7 @@
 #define MAX_NUM 0x3f3f3f3f
 
 pthread_mutex_t global_M_lock;
-pthread_spinlock_t;
+pthread_mutex_t lock1;
 
 int N;
 int M;
@@ -60,22 +60,6 @@ int getFirstNoAssignmentPos(int threadId, int size)
     return -1;
 }
 
-double** transpose(double** A, int row, int col)
-{
-    double* At0 = (double*)malloc(col * row * sizeof(double));
-    double** At = (double**)malloc(row * sizeof(double*));
-    for (int i = 0; i < col; ++i) {
-        At[i] = At0 + col * i;
-    }
-
-    for (int i = 0; i < col; ++i) {
-        for (int j = 0; j < row; ++j) {
-            At[i][j] = A[j][i];
-        }
-    }
-    return At;
-}
-
 void computeMatrix(int i, int j)
 {
     int rowSize = min((i + 1) * B - 1, N - 1) - i * B + 1;
@@ -91,16 +75,28 @@ void computeMatrix(int i, int j)
         A[x] = sequences[i * B + x];
     }
 
-    double* At0 = (double*)malloc(colSize * M * sizeof(double));
-    double** At = (double**)malloc(colSize * sizeof(double*));
+    double* Aj0 = (double*)malloc(colSize * M * sizeof(double));
+    double** Aj = (double**)malloc(colSize * sizeof(double*));
     for (int x = 0; x < colSize; x++){
-        At[x] = At0 + x * M;
+        Aj[x] = Aj0 + x * M;
     }
+
     for (int x = 0; x < rowSize; x++) {
-        At[x] = sequences[j * B + x];
+        Aj[x] = sequences[j * B + x];
     }
     //printf("Calculating Transposition Matrix...\n");
-    At = transpose(At, colSize, M);
+
+    double* At0 = (double*)malloc(M * colSize * sizeof(double));
+    double** At = (double**)malloc(M * sizeof(double*));
+    for (int i = 0; i < M; ++i) {
+        At[i] = At0 + i * colSize;
+    }
+
+    for (int i = 0; i < M; ++i) {
+        for (int j = 0; j < colSize; ++j) {
+            At[i][j] = Aj[j][i];
+        }
+    }
 
     // for (int x = 0; x < M; x++) {
     //     for (int y = 0; y < colSize; y++) {
@@ -127,6 +123,8 @@ void computeMatrix(int i, int j)
 
     free(A0);
     free(A);
+    free(Aj0);
+    free(Aj);
     free(At0);
     free(At);
 }
@@ -301,6 +299,8 @@ int main(int argc, char* argv[])
     // }
 
     bool check = check_result();
+
+    pthread_mutex_destroy(&global_M_lock);
 
     if (!check)
         printf("Calculation is not correct.\n");
