@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
         for (int j = 0; j < N2; ++j) {
             sum = 0;
             for (int z = 0; z < M - rem; z += UNROLLING_FACTOR) {
-                sum += matrixA[i][z] * matrixB[z][j]
+                sum = matrixA[i][z] * matrixB[z][j]
                     + matrixA[i][z + 1] * matrixB[z + 1][j]
                     + matrixA[i][z + 2] * matrixB[z + 2][j]
                     + matrixA[i][z + 3] * matrixB[z + 3][j];
