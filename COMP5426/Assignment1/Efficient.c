@@ -14,7 +14,6 @@
 #define MAX_NUM 0x3f3f3f3f
 
 pthread_mutex_t global_M_lock;
-pthread_mutex_t lock1;
 
 int N;
 int M;
