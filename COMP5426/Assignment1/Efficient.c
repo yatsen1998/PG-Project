@@ -72,45 +72,6 @@ void computeMatrix(int i, int j)
     int rowSize = min((i + 1) * B - 1, N - 1) - i * B + 1;
     int colSize = min((j + 1) * B - 1, N - 1) - j * B + 1;
 
-    double* A0 = (double*)malloc(rowSize * M * sizeof(double));
-    double** A = (double**)malloc(rowSize * sizeof(double*));
-    for (int x = 0; x < rowSize; x++){
-        A[x] = A0 + x * M;
-        A[x] = sequences[i * B + x];
-    }
-
-    double* Aj0 = (double*)malloc(colSize * M * sizeof(double));
-    double** Aj = (double**)malloc(colSize * sizeof(double*));
-    for (int x = 0; x < colSize; x++){
-        Aj[x] = Aj0 + x * M;
-        Aj[x] = sequences[j * B + x];
-    }
-    //printf("Calculating Transposition Matrix...\n");
-    int rem_at = colSize % UNROLLING_FACTOR;
-
-    double* At0 = (double*)malloc(M * colSize * sizeof(double));
-    double** At = (double**)malloc(M * sizeof(double*));
-    for (int x = 0; x < M; ++x) {
-        At[x] = At0 + x * colSize;
-        for (int y = 0; y < colSize - rem_at; y += UNROLLING_FACTOR) {
-            At[x][y] = Aj[y][x];
-            At[x][y + 1] = Aj[y + 1][x];
-            At[x][y + 2] = Aj[y + 2][x];
-            At[x][y + 3] = Aj[y + 3][x];
-        }
-
-        for (int y = colSize - rem_at; y < colSize; y++) {
-            At[x][y] = Aj[y][x];
-        }
-    }
-
-    // for (int x = 0; x < M; x++) {
-    //     for (int y = 0; y < colSize; y++) {
-    //         printf("%lf ", At[x][y]);
-    //     }
-    //     printf("\n");
-    // }
-
     //printf("rowSize:%d, colSize:%d, M:%d\n", rowSize, colSize, M);
     int rem = M % UNROLLING_FACTOR;
 
@@ -125,27 +86,19 @@ void computeMatrix(int i, int j)
             k = R[realX] + realY - realX;
             res = 0;
             for (int z = 0; z < M - rem; z += UNROLLING_FACTOR) {
-                res1 = A[x][z] * At[z][y];
-                res2 = A[x][z + 1] * At[z + 1][y];
-                res3 = A[x][z + 2] * At[z + 2][y];
-                res4 = A[x][z + 3] * At[z + 3][y];
+                res1 = sequences[realX][z] * sequences[realY][z];
+                res2 = sequences[realX][z + 1] * sequences[realY][z + 1];
+                res3 = sequences[realX][z + 2] * sequences[realY][z + 2];
+                res4 = sequences[realX][z + 3] * sequences[realY][z + 3];
                 res += res1 + res2 + res3 + res4;
             }
 
             for (int z = M - rem; z < M; ++z) {
-                res += A[x][z] * At[z][y];
+                res += sequences[realX][z] * sequences[realY][z];
             }
-
             V[k] = res;
         }
     }
-
-    free(A0);
-    free(A);
-    free(Aj0);
-    free(Aj);
-    free(At0);
-    free(At);
 }
 
 void* pthread_efficient(void* threadId)
