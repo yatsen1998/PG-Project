@@ -14,7 +14,6 @@
 #define MAX_NUM 0x3f3f3f3f
 #define UNROLLING_FACTOR 4
 
-pthread_mutex_t global_M_lock;
 pthread_mutex_t lock1;
 
 int N;
@@ -40,6 +39,13 @@ struct block* blocks;
 int** tasks;
 int* workloads;
 int max_task_size;
+
+int cmp(const void *a, const void *b)
+{
+    int weight1 = ((struct block *) a)->weight;
+    int weight2 = ((struct block *) b)->weight;
+    return weight1 < weight2 ? 1 : -1;
+}
 
 int getMinFromNThread(int size) 
 {
@@ -80,16 +86,21 @@ void computeMatrix(int i, int j)
         Aj[x] = sequences[j * B + x];
     }
     //printf("Calculating Transposition Matrix...\n");
+    int rem_at = colSize % UNROLLING_FACTOR;
 
     double* At0 = (double*)malloc(M * colSize * sizeof(double));
     double** At = (double**)malloc(M * sizeof(double*));
     for (int x = 0; x < M; ++x) {
         At[x] = At0 + x * colSize;
-        for (int y = 0; y < colSize; y += UNROLLING_FACTOR) {
+        for (int y = 0; y < colSize - rem_at; y += UNROLLING_FACTOR) {
             At[x][y] = Aj[y][x];
             At[x][y + 1] = Aj[y + 1][x];
             At[x][y + 2] = Aj[y + 2][x];
             At[x][y + 3] = Aj[y + 3][x];
+        }
+
+        for (int y = colSize - rem_at; y < colSize; y++) {
+            At[x][y] = Aj[y][x];
         }
     }
 
@@ -101,25 +112,31 @@ void computeMatrix(int i, int j)
     // }
 
     //printf("rowSize:%d, colSize:%d, M:%d\n", rowSize, colSize, M);
+    int rem = M % UNROLLING_FACTOR;
 
-    double res1 = 0, res2 = 0, res3 = 0, res4 = 0;
+    int realX = 0, realY = 0;
+    int k = 0;
+    double res = 0, res1 = 0, res2 = 0, res3 = 0, res4 = 0;
     for (int x = 0; x < rowSize; ++x) {
         for (int y = 0; y < colSize; ++y) {
-            int realX = x + i * B;
-            int realY = y + j * B;
-            res1 = 0;
-            res2 = 0;
-            res3 = 0;
-            res4 = 0;
-            int k = R[realX] + realY - realX;
+            realX = x + i * B;
+            realY = y + j * B;
             if (realY < realX) continue;
-            for (int z = 0; z < M; z += UNROLLING_FACTOR) {
+            k = R[realX] + realY - realX;
+            res = 0;
+            for (int z = 0; z < M - rem; z += UNROLLING_FACTOR) {
                 res1 = A[x][z] * At[z][y];
                 res2 = A[x][z + 1] * At[z + 1][y];
                 res3 = A[x][z + 2] * At[z + 2][y];
                 res4 = A[x][z + 3] * At[z + 3][y];
-                V[k] += res1 + res2 + res3 + res4;
+                res += res1 + res2 + res3 + res4;
             }
+
+            for (int z = M - rem; z < M; ++z) {
+                res += A[x][z] * At[z][y];
+            }
+
+            V[k] = res;
         }
     }
 
@@ -227,7 +244,12 @@ int main(int argc, char* argv[])
             else blocks[k].weight = rowSize * colSize; 
         }
     }
-    
+
+    qsort(blocks, blockNum, sizeof(struct block), cmp);
+    // for (int i = 0; i < blockNum; ++i) {
+    //     printf("");
+    // }
+
     printf("\nAssigning tasks...\n");
     // Allocating taskList
     max_task_size = blockNum;
@@ -267,10 +289,11 @@ int main(int argc, char* argv[])
     //     printf("total_workload:%d\n", workloads[i]);
     // }
 
+    printf("\nCalculating Matrix...\n");
+
     int rc = 0;
     int tids[num_threads];
     pthread_t threads[num_threads];
-    pthread_mutex_init(&global_M_lock, NULL);
 
     gettimeofday(&start_time, 0);
 
@@ -292,7 +315,7 @@ int main(int argc, char* argv[])
     long microseconds = end_time.tv_usec - start_time.tv_usec;
     double elapsed = seconds + 1e-6 * microseconds;
 
-    printf("Efficient Pthread method took %lf seconds to complete.\n\n", elapsed);
+    printf("\nEfficient Pthread method took %lf seconds to complete.\n\n", elapsed);
 
     // for (int i = 0; i < result_size; i++) {
     //     printf("%2lf ", result[i]);
@@ -300,13 +323,10 @@ int main(int argc, char* argv[])
 
     bool check = check_result();
 
-    pthread_mutex_destroy(&global_M_lock);
-
     if (!check)
         printf("Calculation is not correct.\n");
     else 
         printf("Calculation is correct!\n");
-
 
     free(task);
     free(tasks);
