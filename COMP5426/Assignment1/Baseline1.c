@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <sys/time.h>
 #include <pthread.h>
+#include <math.h>
 
 int N;
 int M;
@@ -91,11 +92,11 @@ int main(int argc, char* argv[])
     
     /* Generate threads */
     int ret = 0;
-    workload = (int)((double)result_size / T + 0.5);
+    workload = ceil((double)result_size / T);
     int tids[num_threads];
     pthread_t threads[num_threads];
 
-    //printf("result_size: %d workload:%d\n", result_size, workload);
+    printf("result_size: %d workload:%d\n", result_size, workload);
 
     gettimeofday(&start_time, 0);
 
