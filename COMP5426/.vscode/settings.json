@@ -5,6 +5,12 @@
         "chrono": "c",
         "unordered_map": "c",
         "algorithm": "c",
-        "time.h": "c"
+        "time.h": "c",
+        "__locale": "c",
+        "__tuple": "c",
+        "atomic": "c",
+        "locale": "c",
+        "memory": "c",
+        "string": "c"
     }
 }

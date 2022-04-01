@@ -20,9 +20,12 @@ int N;
 int M;
 int T;
 int B;
+int workload = 0;
+int* R;
 double** sequences;
 double* V;
-int* R;
+double* V_baseline;
+
 
 struct timeval start_time, end_time;
 
@@ -115,6 +118,34 @@ void* pthread_efficient(void* threadId)
     return NULL;
 }
 
+void* pthread_baseline(void* threadId)
+{
+    int count = 0;
+    double sum = 0;
+    int* id;
+
+    id = (int*) threadId;
+
+    for (int i = 0; i < N; i++) {
+        for (int j = i; j < N; j++) {
+            if(count >= workload * (*id) && count < workload * ((*id) + 1)) {
+                sum = 0;
+                for (int z = 0; z < M; z++) {
+                    sum += sequences[i][z] * sequences[j][z];
+                }
+                V_baseline[count] = sum;
+                count++;
+            } else {
+                count++;
+                continue;
+            }
+
+        }
+    }
+
+    return NULL;
+}
+
 bool check_result()
 {
     int count = 0;
@@ -126,7 +157,10 @@ bool check_result()
                 sum += sequences[i][z] * sequences[j][z];
             }
             if (fabs(V[count] - sum) > 0.000001) {
-                printf("count:%d V[count]:%lf sum:%lf\n", count, V[count], sum);
+                printf("Efficient Computation Error count:%d V[count]:%lf sum:%lf\n", count, V[count], sum);
+                return false;
+            } else if (fabs(V_baseline[count] - sum) > 0.000001) {
+                printf("Baseline Computation Error count:%d V[count]:%lf sum:%lf\n", count, V[count], sum);
                 return false;
             }
             count++;
@@ -143,9 +177,10 @@ int main(int argc, char* argv[])
     B = atoi(argv[4]);
     int num_threads = T;
 
-    /* Allocate result array. */
+    /* Allocate result arrays. */
     int result_size = N * (N + 1) / 2;
     V = (double*) malloc(result_size * sizeof(double));
+    V_baseline = (double*) malloc(result_size * sizeof(double));
 
     /* Allocate pivot array */
     R = (int*) malloc(N * sizeof(int));
@@ -172,7 +207,7 @@ int main(int argc, char* argv[])
 
     /* Efficient pthread implementation */
     
-    printf("\nPartitioning Blocks...\n");
+    //printf("\nPartitioning Blocks...\n");
     int blockN = ceil((double)N / B);;     // To make more even blocks, B should be divisible by N
     int blockNum = blockN * (blockN + 1) / 2;
 
@@ -199,11 +234,7 @@ int main(int argc, char* argv[])
     }
 
     qsort(blocks, blockNum, sizeof(struct block), cmp);
-    // for (int i = 0; i < blockNum; ++i) {
-    //     printf("");
-    // }
 
-    printf("\nAssigning tasks...\n");
     // Allocating taskList
     max_task_size = blockNum;
     int* task = (int*) malloc(num_threads * max_task_size * sizeof(int));
@@ -242,11 +273,35 @@ int main(int argc, char* argv[])
     //     printf("total_workload:%d\n", workloads[i]);
     // }
 
-    printf("\nCalculating Matrix...\n");
-
+    //printf("\nCalculating Matrix...\n");
     int rc = 0;
     int tids[num_threads];
     pthread_t threads[num_threads];
+
+    int ret = 0;
+    workload = ceil((double)result_size / T);
+
+    gettimeofday(&start_time, 0);
+
+    for (int i = 0; i < num_threads; ++i) {
+        tids[i] = i;
+        ret = pthread_create(&threads[i], NULL, pthread_baseline, (void*) &tids[i]);
+        if (ret) {
+            printf("Pthread Create Failed.\n");
+            exit(-1);
+        }
+    }
+
+    for (int i = 0; i < num_threads; i++) {
+        pthread_join(threads[i], NULL);
+    }
+
+    gettimeofday(&end_time, 0);
+    long seconds = end_time.tv_sec - start_time.tv_sec;
+    long microseconds = end_time.tv_usec - start_time.tv_usec;
+    double elapsed = seconds + 1e-6 * microseconds;
+
+    printf("Baseline algorithm took %f seconds to complete.\n\n", elapsed);
 
     gettimeofday(&start_time, 0);
 
@@ -264,15 +319,11 @@ int main(int argc, char* argv[])
     }
 
     gettimeofday(&end_time, 0);
-    long seconds = end_time.tv_sec - start_time.tv_sec;
-    long microseconds = end_time.tv_usec - start_time.tv_usec;
-    double elapsed = seconds + 1e-6 * microseconds;
+    seconds = end_time.tv_sec - start_time.tv_sec;
+    microseconds = end_time.tv_usec - start_time.tv_usec;
+    elapsed = seconds + 1e-6 * microseconds;
 
-    printf("\nEfficient Pthread method took %lf seconds to complete.\n\n", elapsed);
-
-    // for (int i = 0; i < result_size; i++) {
-    //     printf("%2lf ", result[i]);
-    // }
+    printf("Efficient Algorithm took %lf seconds to complete.\n\n", elapsed);
 
     bool check = check_result();
 
