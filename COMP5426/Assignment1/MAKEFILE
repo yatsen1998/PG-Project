@@ -1,0 +1,3 @@
+all: assignment1
+assignment1:
+	gcc assignment1.c -o assignment1.o -lpthread -Wall -pedantic -lm
