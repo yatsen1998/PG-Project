@@ -100,7 +100,6 @@ void pairwise_two_mat_0(double** A, double** B, double** C, int rows1, int rows2
                 C[i][j] += A[i][k] * B[j][k];
 }
 
-
 void print_matrix(double** T, int rows, int cols){
     for (int i=0; i < rows; i++){
         for (int j=0; j < cols; j++)
