@@ -18,17 +18,26 @@ int N;
 int M;
 int T;
 int B;
+int num_threads;
 int* R;
 double* sequences;
 double* V;
 
 struct timeval start_time, end_time;
-
+typedef struct {
+    int id;
+    double* matA;
+    double* matB;
+    int m;
+    int n;
+    int x;
+    int y;
+}arguments;
 
 void print_matrix(double* mat, int m, int n);
 void matMultiplyWithSingleThread(double* A, double* B, int m, int n, int x, int y);
-void computeMatrix(int i, int j);
-void* pthread_efficient(void* threadId);
+void* pthread_do_computation(void* arg);
+void matMultiplyWithPThread(double* A, double* B, int m, int n, int x, int y);
 bool check_result();
 
 int main(int argc, char* argv[])
@@ -37,10 +46,9 @@ int main(int argc, char* argv[])
     M = atoi(argv[2]);
     T = atoi(argv[3]);
 
-    int num_threads = T;
+    num_threads = T;
 
     int myid, numprocs;
-    MPI_Status status;
 
     MPI_Init(&argc,&argv);
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
@@ -48,13 +56,9 @@ int main(int argc, char* argv[])
 
     B = N / numprocs;
 
-    double* sequence;
     int blockN = N / B; // To simplify the calculation, demanded by requirement
     const int steps = (blockN + 1) / 2;
     int result_size = N * (N + 1) / 2;
-
-    int value = 0;
-    int pos = 0;
 
     /* Allocate result array. */
     V = (double*) malloc(result_size * sizeof(double));
@@ -92,7 +96,7 @@ int main(int argc, char* argv[])
             }
             // printf("\n");
         }
-
+        // printf("\n");
     }
 
     MPI_Bcast(V, result_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -105,7 +109,8 @@ int main(int argc, char* argv[])
     int rightRank = (myid + 1) % numprocs;
 
     for (int i = 0; i < steps; i++) {
-        matMultiplyWithSingleThread(OwnedBlock, ExchangedBlock, B, M, myid, (myid + i) % numprocs);
+        // matMultiplyWithSingleThread(OwnedBlock, ExchangedBlock, B, M, myid, (myid + i) % numprocs);
+        matMultiplyWithPThread(OwnedBlock, ExchangedBlock, B, M, myid, (myid + i) % numprocs);
         //ComputeMatrixWithThreads(ExchangedBlock);
 
         MPI_Sendrecv_replace((void*)ExchangedBlock, M * B * 2, MPI_FLOAT, leftRank, 0, rightRank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -139,35 +144,6 @@ int main(int argc, char* argv[])
             printf("Calculation is correct!\n");
     }
 
-    // /* Calculating Matrix */
-    // int rc = 0;
-    // int tids[num_threads];
-    // pthread_t threads[num_threads];
-
-    // // gettimeofday(&start_time, 0);
-
-    // for (int i = 0; i < num_threads; ++i) {
-    //     tids[i] = i;
-    //     rc = pthread_create(&threads[i], NULL, pthread_efficient, (void*) &tids[i]);
-    //     if (rc) {
-    //         printf("Pthread Create Failed.\n");
-    //         exit(-1);
-    //     }
-    // }
-
-    // for (int i = 0; i < num_threads; i++) {
-    //     pthread_join(threads[i], NULL);
-    // }
-
-    // gettimeofday(&end_time, 0);
-    // seconds = end_time.tv_sec - start_time.tv_sec;
-    // microseconds = end_time.tv_usec - start_time.tv_usec;
-    // elapsed = seconds + 1e-6 * microseconds;
-
-    // printf("Efficient Algorithm took %lf seconds to complete.\n\n", elapsed);
-
-
-
     free(sequences);
     free(R);
     free(V);
@@ -180,11 +156,12 @@ int main(int argc, char* argv[])
 void print_matrix(double* mat, int m, int n)
 {
     for (int i = 0; i < m; i++) {
-            for (int j = 0; j < n; j++) {
-                printf("%lf ", mat[i * n + j]);
-            }
-            printf("\n");
+        for (int j = 0; j < n; j++) {
+            printf("%lf ", mat[i * n + j]);
         }
+        printf("\n");
+    }
+    printf("\n");
 }
 
 void matMultiplyWithSingleThread(double* matA, double* matB, int m, int n, int x, int y)
@@ -222,53 +199,99 @@ void matMultiplyWithSingleThread(double* matA, double* matB, int m, int n, int x
     }
 }
 
-// void computeMatrix(int i, int j)
-// {
-//     int rowSize = min((i + 1) * B - 1, N - 1) - i * B + 1;
-//     int colSize = min((j + 1) * B - 1, N - 1) - j * B + 1;
+void* pthread_do_computation(void* arg) 
+{
+    arguments* p = (arguments*) arg;
+    int id = (int) p->id;
+    int m = (int) p->m;
+    int n = (int) p->n;
+    int x = (int) p->x;
+    int y = (int) p->y;
+    double* matA= p->matA;
+    double* matB= p->matB;
 
-//     //printf("rowSize:%d, colSize:%d, M:%d\n", rowSize, colSize, M);
-//     int rem = M % UNROLLING_FACTOR;
+    int work = 0;
+    int total = 0;
+    if (x == y) {
+        total = B * (B + 1) / 2;
+        work = ceil((double)total / num_threads);
+    }
+    else {
+        total = B * B;
+        work = ceil((double)total / num_threads);
+    }
 
-//     int realX = 0, realY = 0;
-//     int k = 0;
-//     double res = 0, res1 = 0, res2 = 0, res3 = 0, res4 = 0;
-//     for (int x = 0; x < rowSize; ++x) {
-//         for (int y = 0; y < colSize; ++y) {
-//             realX = x + i * B;
-//             realY = y + j * B;
-//             if (realY < realX) continue;
-//             k = R[realX] + realY - realX;
-//             res = 0;
-//             for (int z = 0; z < M - rem; z += UNROLLING_FACTOR) {
-//                 res1 = sequences[realX][z] * sequences[realY][z];
-//                 res2 = sequences[realX][z + 1] * sequences[realY][z + 1];
-//                 res3 = sequences[realX][z + 2] * sequences[realY][z + 2];
-//                 res4 = sequences[realX][z + 3] * sequences[realY][z + 3];
-//                 res += res1 + res2 + res3 + res4;
-//             }
+    int count = 0;
+    double sum = 0;
+    for (int i = 0; i < m; i++) {
+        for (int j = 0; j < m; j++) {
+            if (x == y && i > j) continue;
+            if(count >= work * id && count < work * (id + 1)) {
+                sum = 0;
+                for (int z = 0; z < n; z++) {
+                    sum += matA[i * n + z] * matB[j * n + z];
+                }
+                int realX = i + x * B;
+                int realY = j + y * B;
 
-//             for (int z = M - rem; z < M; ++z) {
-//                 res += sequences[realX][z] * sequences[realY][z];
-//             }
-//             V[k] = res;
-//         }
-//     }
-// }
+                if (x > y) {
+                    int tmp = realX;
+                    realX = realY;
+                    realY = tmp;
+                }
 
-// void* pthread_efficient(void* threadId)
-// {
-//     int* id = (int*) threadId;
-//     struct block curBlock;
+                if (realY < realX) continue;
+                int k = R[realX] + realY - realX;
+                V[k] = sum;
+                // printf("V[%d]:%lf ", k, V[k]);
 
-//     for (int i = 0; tasks[(*id)][i] != MAX_NUM && i < max_task_size; ++i) {
-//         curBlock = blocks[tasks[(*id)][i]];
-//         //printf("Calculating Block:%d A%d A%d...\n", tasks[(*id)][i], curBlock.i, curBlock.j);
-//         computeMatrix(curBlock.i, curBlock.j);
-//     }
+                count++;
+            } else {
+                count++;
+                continue;
+            }
+        }
+    }
 
-//     return NULL;
-// }
+    pthread_exit(0);
+}
+
+
+void matMultiplyWithPThread(double* matA, double* matB, int m, int n, int x, int y)
+{
+    /* Calculating Matrix */
+    int rc = 0;
+    pthread_t threads[num_threads];
+
+    arguments* arg = (arguments*) malloc(sizeof(arguments) * num_threads);
+    // // gettimeofday(&start_time, 0);
+
+    for (int i = 0; i < num_threads; ++i) {
+        arg[i].id = i;
+        arg[i].matA = matA;
+        arg[i].matB = matB;
+        arg[i].m = m;
+        arg[i].n = n;
+        arg[i].x = x;
+        arg[i].y = y;
+
+        rc = pthread_create(&threads[i], NULL, pthread_do_computation, (void*) (arg + i));
+        if (rc) {
+            printf("Pthread Create Failed.\n");
+            exit(-1);
+        }
+    }
+
+    for (int i = 0; i < num_threads; i++) {
+        pthread_join(threads[i], NULL);
+    }
+
+    // gettimeofday(&end_time, 0);
+    // seconds = end_time.tv_sec - start_time.tv_sec;
+    // microseconds = end_time.tv_usec - start_time.tv_usec;
+    // elapsed = seconds + 1e-6 * microseconds;
+
+}
 
 bool check_result()
 {
