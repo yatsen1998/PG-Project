@@ -199,6 +199,23 @@ void matMultiplyWithSingleThread(double* matA, double* matB, int m, int n, int x
     }
 }
 
+void index_conversion(int i, int j, int x, int y, double sum)
+{
+    int realX = i + x * B;
+    int realY = j + y * B;
+
+    if (x > y) {
+        int tmp = realX;
+        realX = realY;
+        realY = tmp;
+    }
+
+    if (realY < realX) return;
+    int k = R[realX] + realY - realX;
+    V[k] = sum;
+    // printf("V[%d]:%lf ", k, V[k]);
+}
+
 void* pthread_do_computation(void* arg) 
 {
     arguments* p = (arguments*) arg;
@@ -223,33 +240,38 @@ void* pthread_do_computation(void* arg)
 
     int count = 0;
     double sum = 0;
-    for (int i = 0; i < m; i++) {
+    double res1 = 0, res2 = 0, res3 = 0, res4 = 0;
+    for (int i = 0; i < m; i += 2) {
         for (int j = 0; j < m; j++) {
             if (x == y && i > j) continue;
             if(count >= work * id && count < work * (id + 1)) {
                 sum = 0;
-                for (int z = 0; z < n; z++) {
-                    sum += matA[i * n + z] * matB[j * n + z];
+                for (int z = 0; z < n; z += UNROLLING_FACTOR) {
+                    res1 = matA[i * n + z] * matB[j * n + z];
+                    res2 = matA[i * n + z + 1] * matB[j * n + z + 1];
+                    res3 = matA[i * n + z + 2] * matB[j * n + z + 2];
+                    res4 = matA[i * n + z + 3] * matB[j * n + z + 3];
+                    sum += res1 + res2 + res3 + res4;
                 }
-                int realX = i + x * B;
-                int realY = j + y * B;
-
-                if (x > y) {
-                    int tmp = realX;
-                    realX = realY;
-                    realY = tmp;
-                }
-
-                if (realY < realX) continue;
-                int k = R[realX] + realY - realX;
-                V[k] = sum;
-                // printf("V[%d]:%lf ", k, V[k]);
-
-                count++;
-            } else {
-                count++;
-                continue;
+                index_conversion(i, j, x, y, sum);
             }
+            count++;
+        }
+
+        for (int j = 0; j < m; j++) {
+            if (x == y && (i + 1) > j) continue;
+            if(count >= work * id && count < work * (id + 1)) {
+                sum = 0;
+                for (int z = 0; z < n; z += UNROLLING_FACTOR) {
+                    res1 = matA[(i + 1) * n + z] * matB[j * n + z];
+                    res2 = matA[(i + 1) * n + z + 1] * matB[j * n + z + 1];
+                    res3 = matA[(i + 1) * n + z + 2] * matB[j * n + z + 2];
+                    res4 = matA[(i + 1) * n + z + 3] * matB[j * n + z + 3];
+                    sum += res1 + res2 + res3 + res4;
+                }
+                index_conversion(i + 1, j, x, y, sum);
+            }
+            count++;
         }
     }
 
@@ -305,13 +327,13 @@ bool check_result()
             }
 
             if (fabs(V[count] - sum) > 0.000001) {
-                for (int z = 0; z < M; z++) {
-                    printf("%lf ", sequences[i * M + z]);
-                }
-                printf("\n");
-                for (int z = 0; z < M; z++) {
-                    printf("%lf ", sequences[j * M + z]);
-                }
+                // for (int z = 0; z < M; z++) {
+                //     printf("%lf ", sequences[i * M + z]);
+                // }
+                // printf("\n");
+                // for (int z = 0; z < M; z++) {
+                //     printf("%lf ", sequences[j * M + z]);
+                // }
                 printf("Computation Error count:%d V[count]:%lf sum:%lf\n", count, V[count], sum);
                 return false;
             }
