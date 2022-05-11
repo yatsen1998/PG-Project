@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
 				printf("\n\n");
 			}
 		}
-	
+
 		if (numprocs > 1){
 			//send a submatrix to every other processes
 			q = M / numprocs;
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
 				MPI_Recv(&A[ib][0], kn, MPI_INT, i, 2, MPI_COMM_WORLD, &status);
 			}
 		}
-		
+
 		printf("\n Output Updated Matrix A:\n");
 		for(i=0; i<M; i++){
 			for(j=0; j<N; j++){
@@ -101,9 +101,8 @@ int main(int argc, char **argv) {
 				printf("\n\n");
 			}
 		}
-
     }
-    else { /*all other processes. */
+    else {
 		//create a submatrix A of size K X N.
 		q = M / numprocs;
 		r = M % numprocs;
@@ -121,7 +120,7 @@ int main(int argc, char **argv) {
 		}
 		for(i = 0; i < K; i++)
 			A[i] = &A0[i*N];
-				
+
 		printf("myid = %d, K = %d.\n", myid, K);	
 
 		/* recv a submatrix from process 0.*/
