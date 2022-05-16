@@ -42,6 +42,7 @@ bool check_result();
 
 int main(int argc, char* argv[])
 {
+    /* Requirements for N, M, T: N = np * T, M = k * UNROLLING_FACTOR (k as a integer) */
     N = atoi(argv[1]);
     M = atoi(argv[2]);
     T = atoi(argv[3]);
@@ -55,8 +56,8 @@ int main(int argc, char* argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
     B = N / numprocs;
-
-    int blockN = N / B; // To simplify the calculation, demanded by requirement
+    /* To simplify the calculation, demanded by requirement */
+    int blockN = N / B; 
     const int steps = (blockN + 1) / 2;
     int result_size = N * (N + 1) / 2;
 
@@ -92,11 +93,8 @@ int main(int argc, char* argv[])
         for (int i = 0; i < N; ++i) {
             for (int j = 0; j < M; ++j) {
                 sequences[i * M + j] = (double) rand() / RAND_MAX;
-                // printf("%lf ", sequences[i * M + j]);
             }
-            // printf("\n");
         }
-        // printf("\n");
     }
 
     MPI_Bcast(V, result_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -111,16 +109,9 @@ int main(int argc, char* argv[])
     for (int i = 0; i < steps; i++) {
         // matMultiplyWithSingleThread(OwnedBlock, ExchangedBlock, B, M, myid, (myid + i) % numprocs);
         matMultiplyWithPThread(OwnedBlock, ExchangedBlock, B, M, myid, (myid + i) % numprocs);
-        //ComputeMatrixWithThreads(ExchangedBlock);
-
+        /* Send and replace the exchanged blocks as requested */
         MPI_Sendrecv_replace((void*)ExchangedBlock, M * B * 2, MPI_FLOAT, leftRank, 0, rightRank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
-
-    // if (myid == 2) {
-    //     for (int i = 0; i < result_size; i++) {
-    //         printf("P:%d V[%d]:%lf\n", myid, i, V[i]);
-    //     }
-    // }
 
     MPI_Gather(V, result_size, MPI_DOUBLE, allV, result_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
@@ -129,12 +120,7 @@ int main(int argc, char* argv[])
             if (allV[i] != 0) {
                 V[i % result_size] = allV[i];
             }
-            // printf("V[%d]:%lf\n", i % result_size, allV[i]);
         }
-
-        // for (int i = 0; i < result_size; i++) {
-        //     printf("V[%d]:%lf\n", i, V[i]);
-        // }
 
         bool check = check_result();
 
@@ -155,6 +141,7 @@ int main(int argc, char* argv[])
 
 void print_matrix(double* mat, int m, int n)
 {
+    /* A simple matrix to handle*/
     for (int i = 0; i < m; i++) {
         for (int j = 0; j < n; j++) {
             printf("%lf ", mat[i * n + j]);
@@ -166,6 +153,7 @@ void print_matrix(double* mat, int m, int n)
 
 void matMultiplyWithSingleThread(double* matA, double* matB, int m, int n, int x, int y)
 {
+    /* A single threaded function to help test the MPI code */
     double* matResult = (double*) malloc(m * m * sizeof(double));
     for (int i = 0; i < m; i++) {
         for (int j = 0; j < m; j++) {
@@ -201,6 +189,7 @@ void matMultiplyWithSingleThread(double* matA, double* matB, int m, int n, int x
 
 void index_conversion(int i, int j, int x, int y, double sum)
 {
+    /* To convert the coordinate to the actual location in the large matrix */
     int realX = i + x * B;
     int realY = j + y * B;
 
@@ -213,11 +202,11 @@ void index_conversion(int i, int j, int x, int y, double sum)
     if (realY < realX) return;
     int k = R[realX] + realY - realX;
     V[k] = sum;
-    // printf("V[%d]:%lf ", k, V[k]);
 }
 
 void* pthread_do_computation(void* arg) 
 {
+    /* To do the actual computation within each thread */
     arguments* p = (arguments*) arg;
     int id = (int) p->id;
     int m = (int) p->m;
@@ -242,10 +231,21 @@ void* pthread_do_computation(void* arg)
     double sum = 0;
     double res1 = 0, res2 = 0, res3 = 0, res4 = 0;
     for (int i = 0; i < m; i += 2) {
+        /* Outer Loop unrolliong factor: 2
+         *
+         * Of course, the unrolling can be more complex, as all the 3
+         * level can be unrolled.
+         * Unroll all the level here is a manual labour work, I will only
+         * unrolls the first and the last level to prove I have got the
+         * knowledge of unrolling outer loop to increase efficiency.
+         */
         for (int j = 0; j < m; j++) {
             if (x == y && i > j) continue;
             if(count >= work * id && count < work * (id + 1)) {
                 sum = 0;
+                /* Inner Loop unrolling factor: 4
+                 * The laziness also made me to assume all the B should be n times of 4.
+                 */
                 for (int z = 0; z < n; z += UNROLLING_FACTOR) {
                     res1 = matA[i * n + z] * matB[j * n + z];
                     res2 = matA[i * n + z + 1] * matB[j * n + z + 1];
@@ -317,6 +317,7 @@ void matMultiplyWithPThread(double* matA, double* matB, int m, int n, int x, int
 
 bool check_result()
 {
+    /* The sequence computation to check the result */
     int count = 0;
     double sum = 0;
     for (int i = 0; i < N; i++) {
@@ -327,13 +328,6 @@ bool check_result()
             }
 
             if (fabs(V[count] - sum) > 0.000001) {
-                // for (int z = 0; z < M; z++) {
-                //     printf("%lf ", sequences[i * M + z]);
-                // }
-                // printf("\n");
-                // for (int z = 0; z < M; z++) {
-                //     printf("%lf ", sequences[j * M + z]);
-                // }
                 printf("Computation Error count:%d V[count]:%lf sum:%lf\n", count, V[count], sum);
                 return false;
             }
