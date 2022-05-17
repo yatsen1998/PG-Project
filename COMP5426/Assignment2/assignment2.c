@@ -42,7 +42,7 @@ bool check_result();
 
 int main(int argc, char* argv[])
 {
-    /* Requirements for N, M, T: N = np * T, M = k * UNROLLING_FACTOR (k as a integer) */
+    /* Requirements for N, M, T: N = np * T */
     N = atoi(argv[1]);
     M = atoi(argv[2]);
     T = atoi(argv[3]);
@@ -227,6 +227,7 @@ void* pthread_do_computation(void* arg)
         work = ceil((double)total / num_threads);
     }
 
+    int rem = n % UNROLLING_FACTOR;
     int count = 0;
     double sum = 0;
     double res1 = 0, res2 = 0, res3 = 0, res4 = 0;
@@ -243,15 +244,17 @@ void* pthread_do_computation(void* arg)
             if (x == y && i > j) continue;
             if(count >= work * id && count < work * (id + 1)) {
                 sum = 0;
-                /* Inner Loop unrolling factor: 4
-                 * The laziness also made me to assume all the B should be n times of 4.
-                 */
-                for (int z = 0; z < n; z += UNROLLING_FACTOR) {
+                /* Inner Loop unrolling factor: 4 */
+                for (int z = 0; z < n - rem; z += UNROLLING_FACTOR) {
                     res1 = matA[i * n + z] * matB[j * n + z];
                     res2 = matA[i * n + z + 1] * matB[j * n + z + 1];
                     res3 = matA[i * n + z + 2] * matB[j * n + z + 2];
                     res4 = matA[i * n + z + 3] * matB[j * n + z + 3];
                     sum += res1 + res2 + res3 + res4;
+                }
+
+                for (int z = n - rem; z < n; ++z) {
+                    sum += matA[i * n + z] * matB[j * n + z];
                 }
                 index_conversion(i, j, x, y, sum);
             }
@@ -262,12 +265,16 @@ void* pthread_do_computation(void* arg)
             if (x == y && (i + 1) > j) continue;
             if(count >= work * id && count < work * (id + 1)) {
                 sum = 0;
-                for (int z = 0; z < n; z += UNROLLING_FACTOR) {
+                for (int z = 0; z < n - rem; z += UNROLLING_FACTOR) {
                     res1 = matA[(i + 1) * n + z] * matB[j * n + z];
                     res2 = matA[(i + 1) * n + z + 1] * matB[j * n + z + 1];
                     res3 = matA[(i + 1) * n + z + 2] * matB[j * n + z + 2];
                     res4 = matA[(i + 1) * n + z + 3] * matB[j * n + z + 3];
                     sum += res1 + res2 + res3 + res4;
+                }
+
+                for (int z = n - rem; z < n; ++z) {
+                    sum += matA[(i + 1) * n + z] * matB[j * n + z];
                 }
                 index_conversion(i + 1, j, x, y, sum);
             }
