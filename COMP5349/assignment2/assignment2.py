@@ -78,7 +78,6 @@ ps_preproc_df = paragraph_preproc_df.filter("is_impossible==False").drop("is_imp
 
 positive_sample_df = ps_preproc_df.filter((col("answer_start") != 0) | (col("answer_end") != 0)) \
                                        .select("id", "source", "question", "answer_start", "answer_end") \
-                                       .orderBy(col("id").asc())
 
 window = Window.partitionBy(["id"])
 ps_question_count = positive_sample_df.withColumn("n", count("id").over(window)) \
@@ -124,7 +123,6 @@ impossible_negative_sample_df = impossible_negative_preproc_df.join(positive_sam
                                                             .withColumnRenamed("im_source", "source") \
                                                             .withColumn("answer_end", col("answer_start")) \
                                                             .select("id", "source", "question", "answer_start", "answer_end") \
-                                                            .orderBy(col("id"))
 
 # impossible_negative_sample_df.show(10)
 # impossible_negative_sample_df.describe(["id"]).show()
@@ -154,7 +152,6 @@ possible_negative_sample_df = possible_negative_preproc_df.join(positive_sample_
                                                           .withColumnRenamed("p_source", "source") \
                                                           .withColumnRenamed("p_answer_start", "answer_start") \
                                                           .withColumnRenamed("p_answer_end", "answer_end")
-#                                                           .orderBy(col("id"))
 
 # possible_negative_sample_df.show(20)
 # possible_negative_sample_df.describe(["id"]).show()
