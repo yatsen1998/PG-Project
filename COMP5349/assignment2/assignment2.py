@@ -5,9 +5,7 @@ from pyspark.sql.functions import udf
 # Read Json files
 spark = SparkSession \
     .builder \
-    .appName("COMP5349 A2 Data Loading") \
-    .config("spark.executor.memory", "4g") \
-    .config("spark.driver.memory",'4g') \
+    .appName("COMP5349 A2") \
     .getOrCreate()
 
 data = "test.json"
