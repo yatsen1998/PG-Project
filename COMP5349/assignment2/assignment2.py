@@ -23,7 +23,7 @@ paragraph_unrolled_df = data_df.select(explode("data.paragraphs").alias("paragra
                                .withColumnRenamed("qas.id", "id").withColumnRenamed("qas.question", "question").withColumnRenamed("qas.is_impossible", "is_impossible") \
                                .select("context", "id", "question", "is_impossible", "answer.answer_start", "answer.text")
 
-paragraph_unrolled_df.show(5)
+# paragraph_unrolled_df.show(5)
 # paragraph_unrolled_df.printSchema()
 
 import re
@@ -171,3 +171,8 @@ positive_samples = positive_sample_df.drop("id")
 
 output_sample = positive_samples.union(possible_negative_samples).union(impossible_negative_samples)
 output_sample.write.mode('Overwrite').json("result")
+
+# The following code can cause OOM exception easily, I recommend use the hdfs commmand to get the merged json file
+# output_sample.coalesce(1).write.mode("overwrite").format("json").save("result")
+
+# hdfs dfs -getmerge result result.json
