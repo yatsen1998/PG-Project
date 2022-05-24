@@ -20,6 +20,7 @@ int T;
 int B;
 int num_threads;
 int* R;
+
 double* sequences;
 double* V;
 
@@ -107,6 +108,7 @@ int main(int argc, char* argv[])
     int rightRank = (myid + 1) % numprocs;
 
     for (int i = 0; i < steps; i++) {
+        /* Both can work, Simply comment/uncomment to change functions */
         // matMultiplyWithSingleThread(OwnedBlock, ExchangedBlock, B, M, myid, (myid + i) % numprocs);
         matMultiplyWithPThread(OwnedBlock, ExchangedBlock, B, M, myid, (myid + i) % numprocs);
         /* Send and replace the exchanged blocks as requested */
@@ -260,7 +262,7 @@ void* pthread_do_computation(void* arg)
             }
             count++;
         }
-
+        if (i + 1 >= m) break;
         for (int j = 0; j < m; j++) {
             if (x == y && (i + 1) > j) continue;
             if(count >= work * id && count < work * (id + 1)) {
