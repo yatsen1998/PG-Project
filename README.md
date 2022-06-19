@@ -7,3 +7,5 @@ Courses with codes are stored here and detailed information can be found in each
 | COMP5216      | Mobile Computing | 2 Assignments and 1 Project |
 | COMP5416   | Advanced Network Technology | All coding Labs and Coding questions in 2 Assignments|
 | ELEC5517  | Software Defined Networks | 2 Projects |
+| COMP5426 | Parallel and Distributed Computing | 2 Assignments and 8 labs |
+| COMP5349 | Cloud Computing | 2 Assignments |
