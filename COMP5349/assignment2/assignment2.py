@@ -5,26 +5,21 @@ from pyspark.sql.functions import udf
 # Read Json files
 spark = SparkSession \
     .builder \
-    .appName("COMP5349 A2 Data Loading") \
-    .config("spark.executor.memory", "8g") \
-    .config("spark.driver.memory",'8g') \
+    .appName("COMP5349 A2") \
     .getOrCreate()
 
-data = "Assignment_2_data/test.json"
+data = "test.json"
 init_df = spark.read.json(data)
 
-data_df= init_df.select((explode("data").alias('data')))
-paragraph_df = data_df.select("data.title", explode("data.paragraphs").alias("paragraph"))
-
 contract_num = 102
-# data_df.printSchema()
-# paragraph_df.printSchema()
-# paragraph_df.show(5)
 
-# Extract dataframes out of the 
-paragraph_unrolled_df = paragraph_df.select("title", "paragraph.context" , explode("paragraph.qas").alias("qas")) \
-                                    .select("title", "context", "qas.id", "qas.question", "qas.is_impossible", explode_outer("qas.answers").alias("answer")) \
-                                    .select("title", "context", "id", "question", "is_impossible", "answer.answer_start", "answer.text")
+data_df= init_df.select((explode("data").alias('data')))
+paragraph_unrolled_df = data_df.select(explode("data.paragraphs").alias("paragraph")) \
+                               .select("paragraph.context" , explode("paragraph.qas").alias("qas")) \
+                               .withColumnRenamed("paragraph.context", "context") \
+                               .select("context", "qas.id", "qas.question", "qas.is_impossible", explode_outer("qas.answers").alias("answer")) \
+                               .withColumnRenamed("qas.id", "id").withColumnRenamed("qas.question", "question").withColumnRenamed("qas.is_impossible", "is_impossible") \
+                               .select("context", "id", "question", "is_impossible", "answer.answer_start", "answer.text")
 
 # paragraph_unrolled_df.show(5)
 # paragraph_unrolled_df.printSchema()
@@ -81,7 +76,6 @@ ps_preproc_df = paragraph_preproc_df.filter("is_impossible==False").drop("is_imp
 
 positive_sample_df = ps_preproc_df.filter((col("answer_start") != 0) | (col("answer_end") != 0)) \
                                        .select("id", "source", "question", "answer_start", "answer_end") \
-                                       .orderBy(col("id").asc())
 
 window = Window.partitionBy(["id"])
 ps_question_count = positive_sample_df.withColumn("n", count("id").over(window)) \
@@ -121,13 +115,12 @@ impossible_negative_preproc_df = paragraph_preproc_df.filter("is_impossible==tru
 # Use a join and null check to realize the prior purpose
 impossible_negative_sample_df = impossible_negative_preproc_df.join(positive_sample_df, ["id","question"], "outer") \
                                                             .filter("source is null or im_source != source") \
-                                                            .drop("title","source", "answer_start", "answer_end") \
+                                                            .drop("source", "answer_start", "answer_end") \
                                                             .withColumnRenamed("im_answer_start", "answer_start") \
                                                             .withColumnRenamed("im_answer_start", "answer_start") \
                                                             .withColumnRenamed("im_source", "source") \
                                                             .withColumn("answer_end", col("answer_start")) \
                                                             .select("id", "source", "question", "answer_start", "answer_end") \
-                                                            .orderBy(col("id"))
 
 # impossible_negative_sample_df.show(10)
 # impossible_negative_sample_df.describe(["id"]).show()
@@ -145,7 +138,7 @@ def getQuestionNum(id):
             return int(row["n"])
     return 0
 
-possible_negative_preproc_df = ps_preproc_df.filter((col("answer_start") == 0) & (col("answer_end") == 0)).drop("title", "text") \
+possible_negative_preproc_df = ps_preproc_df.filter((col("answer_start") == 0) & (col("answer_end") == 0)).drop( "text") \
                                             .withColumnRenamed("source", "p_source") \
                                             .withColumnRenamed("answer_start", "p_answer_start") \
                                             .withColumnRenamed("answer_end", "p_answer_end")
@@ -157,7 +150,6 @@ possible_negative_sample_df = possible_negative_preproc_df.join(positive_sample_
                                                           .withColumnRenamed("p_source", "source") \
                                                           .withColumnRenamed("p_answer_start", "answer_start") \
                                                           .withColumnRenamed("p_answer_end", "answer_end")
-#                                                           .orderBy(col("id"))
 
 # possible_negative_sample_df.show(20)
 # possible_negative_sample_df.describe(["id"]).show()
@@ -174,3 +166,8 @@ positive_samples = positive_sample_df.drop("id")
 
 output_sample = positive_samples.union(possible_negative_samples).union(impossible_negative_samples)
 output_sample.write.mode('Overwrite').json("result")
+
+# The following code can cause OOM exception easily, I recommend use the hdfs commmand to get the merged json file
+# output_sample.coalesce(1).write.mode("overwrite").format("json").save("result")
+
+# hdfs dfs -getmerge result result.json
